@@ -1,6 +1,7 @@
 #![allow(unused_variables, dead_code)]
 
 use rand::Rng;
+use std::collections::HashMap;
 
 /*----------------------------------------------------------------------
 Encoding of card ranks
@@ -271,6 +272,28 @@ fn shuffle_move(d:&mut Deck, s:&DeckSelectors) {
     }
 }
 
+fn test_shuffle_move() {
+    println!("Start test_shuffle_move");
+    // shuffle many times and put decks in hashmap
+    // if there is a duplicate, we fail the test
+    const NLOOPS:usize = 1000000;
+    let mut deck = make_ordinals();
+    let mut hm:HashMap<Deck, usize> = HashMap::new();
+    for i in 0..NLOOPS {
+        if 0==(i%(NLOOPS/20)) {
+            println!("shuffling {}",i);
+            println!("{:?}",deck.0);
+        }
+        for j in 0..10 {
+            let sel = get_rand_bits();
+            shuffle_move(&mut deck.0,&sel);
+        }
+        assert_eq!(None, hm.insert(deck.0, i));
+    }
+    assert!(valid_deck(&deck));
+    println!("Finished test_shuffle_move\n");
+}
+
 fn shuffle_in_place(d:&mut DeckOrdinals,s:&DeckSelectors) {
     let i0:usize = 0;
     let i1:usize = NDECK/2;
@@ -288,6 +311,8 @@ A run is a sequence of values that increase or decrease
 
 
 fn main() {
+
+    test_shuffle_move();
 
     let mut deck = make_ordinals();
     println!("{:?}",deck.0);

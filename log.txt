@@ -1,0 +1,15 @@
+------------------------------------------------------------------------
+2023-04-16 Sunday
+
+Coded a test function for shuffle.  Made a deck in sequence, ordinals.
+Shuffled 10 times.  Inserted into a hash table.  Repeat a million
+times. Ran several times.  No duplicates found. Look at some of
+shuffles.  Looks normal.  So this looks like a good shuffle function.
+
+Found that if you want to see console output of successful tests, then
+you must add this flag.  I think that the console output of failing
+tests is displayed. I guess normally you don't care about output from
+passing tests, and there are probably a lot of tests, and it would get
+cluttered.
+
+    cargo test -- --nocapture
