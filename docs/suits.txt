@@ -1,0 +1,15 @@
+
+
+========  =========     ======  ======  ======  ======   ======   ======
+suit       unicode      pointy  round    red     black    bit      xor
+          bits 6..4      top     top                      code     uni
+========  =========     ======  ======  ======  ======   ======   ======
+spades       010           1      0       0       1        00       010
+diamonds     100           1      0       1       0        01       101
+clubs        101           0      1       0       1        10       111
+hearts       011           0      1       1       0        11       000
+========  =========     ======  ======  ======  ======   ======   ======
+
+red / !black
+
+easier to just use a translate table
