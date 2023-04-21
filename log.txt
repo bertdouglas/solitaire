@@ -1,4 +1,161 @@
 ------------------------------------------------------------------------
+2023-04-21 Friday
+
+Changed a lot of init to lazy static.
+They ran into a problem that could not be fixed.
+Latest version of compiler now recommends
+"once_cell::Lazy"
+So I converted all the lazy inits.
+Also moved most of code to new module called "deck".
+Changed the main deck to a regular struck.  Got rid of the type state
+attempt.
+Still need to convert some functions to be methods of struct Deck.
+Change args to shuffle.  Put the call to get random bits inside of
+shuffle.  Why did I do this?  Oh.  It was to allow comparison of two
+different shuffle functions, one obvious simple code, and the other
+intricate index manipulation.
+
+It compiles and runs
+but does little so far.  I like the closure, which avoids having to make
+a special one use named function as with lazy static.
+------------------------------------------------------------------------
+2023-04-20 Thursday
+
+Found that cargo-asm is abandoned.
+Instead there is new project called cargo-show-asm which
+does roughly same thing but better and active.
+Give it a try.
+cargo uninstall cargo-asm
+cargo install cargo-show-asm
+cargo asm shuffle_main
+
+It worked.  Nice colors.  No source code to speak of.
+Much less junk than raw .s file.
+more references have meaningful names, all library functions, like alloc, panic
+Function is completely inlined.
+
+rustup component add rust-src
+cargo asm --rust  solitaire::main > main.asm
+
+now getting more source code.
+The entirety of make_ordinals reduced to a sequence of moves inlined in main.
+But the source code refers only to one line in the middle of make ordinals.
+Most helpfully the reference includes the line number.
+Ovbiously there is a table somewhere.  Why not reference it directly
+instead of doing moves.
+Not impressed with type states.  Seems to get in the way.
+See if I can convert make ordinals so it is handled completely at compile time.
+Perhaps take another look at lazy static.
+
+		// /home/bertd/0repos/solitaire/src/main.rs : 216
+		out.0[i] = i as u8;
+	movaps xmm0, xmmword ptr [rip + .LCPI24_0]
+	movaps xmmword ptr [rsp + 224], xmm0
+
+	movaps xmm0, xmmword ptr [rip + .LCPI24_1]
+	movaps xmmword ptr [rsp + 240], xmm0
+
+	movaps xmm0, xmmword ptr [rip + .LCPI24_2]
+	movaps xmmword ptr [rsp + 256], xmm0
+
+	mov dword ptr [rsp + 272], 858927408
+
+This is moving 52 bytes.  Using xmm registers it loads and stores
+16 bytes, three times, moving 48 bytes.  Then it moves 4 additional
+bytes from an immediate source, making 52 in all.
+
+.LCPI24_0:
+	.byte	0
+	.byte	1
+	.byte	2
+	.byte	3
+	.byte	4
+	.byte	5
+	.byte	6
+	.byte	7
+	.byte	8
+	.byte	9
+	.byte	10
+	.byte	11
+	.byte	12
+	.byte	13
+	.byte	14
+	.byte	15
+
+This is amazing optimization.  With a little more hint, it should be
+able to get rid of the move.
+
+Decide to rewrite out a deck object, with variant forms.
+Start coding.  Improve a bunch of names.
+Use lots of lazy static, whenever possible.
+
+Have to stop.  Half complete.
+
+------------------------------------------------------------------------
+2023-04-18 Tuesday
+Learning to look at assembly language
+follow advice on web.
+
+      RUSTFLAGS="--emit asm" cargo bench --bench foo
+
+      cargo asm --asm-style=intel \
+         --rust equart::quadtree::Boundry::subarea
+
+      cargo asm --rust crate::klondike_suits
+
+Could not find any relevant output in release mode.
+But this gave some results.  Strange looking assembly.
+
+      RUSTFLAGS="--emit asm" cargo clean
+      RUSTFLAGS="--emit asm" cargo build
+
+In the debug directory found this searching for klondike.
+
+                .section	.text._ZN9solitaire14klondike_suits17h318c732eb4fa0095E,"ax",@progbits
+                .p2align	4, 0x90
+                .type	_ZN9solitaire14klondike_suits17h318c732eb4fa0095E,@function
+              _ZN9solitaire14klondike_suits17h318c732eb4fa0095E:
+              .Lfunc_begin247:
+                .loc	1 155 0
+                .cfi_startproc
+                .loc	1 161 2 prologue_end
+                leaq	_ZN9solitaire14klondike_suits2KS17he916c8a044ee2a49E(%rip), %rax
+                retq
+              .Ltmp2569:
+              .Lfunc_end247:
+                .size	_ZN9solitaire14klondike_suits17h318c732eb4fa0095E, .Lfunc_end247-_ZN9solitaire14klondike_suits17h318c732eb4fa0095E
+                .cfi_endproc
+
+So it appears, indeed, that the function was optimized away into a
+table built at compile time.  I wonder how complicated the code can get and
+still run at compile time.  At run time it is merely a single load
+effective address instruction and return.
+
+In the release version, this function goes away completely and it is inlined.
+Got to be a better way to find the code and read it.
+
+------------------------------------------------------------------------
+2023-04-17 Monday
+
+I timed the shuffle test.  User time is:   2m38.310s
+1e7 calls to shuffle and to get random bits
+ghci> ((2*60)+38.31)/1e7
+1.5831e-5
+
+That is surprisingly fast.
+About 16 microseconds per iteration.  And each iteration
+handles 52 items.  How can it be that fast?
+At 2GHZ that is 32k cycles.  That is the top down.
+Bottom up guess, (52*2*10) 1040 instructions
+That leaves in middle 32 clocks per instruction.
+Seem high.  Perhaps more like 4 to 10.
+
+Wonder if the bulk is in random number generation or in the shuffle.
+Investigate if possible to get a vector of numbers in a single call
+to random number generator.
+
+
+------------------------------------------------------------------------
 2023-04-16 Sunday
 
 Coded a test function for shuffle.  Made a deck in sequence, ordinals.

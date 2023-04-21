@@ -1,0 +1,58 @@
+The static lazy items require explicitly cloning on some uses.
+Consider changing Deck.cards to array instead of vector.
+Seems like I am going back and forth.
+
+Consider moving get random bits inside the shuffle function.
+Put iteration inside the shuffle function as well.
+
+There is a way to seed the random number generator.
+Compare to current rng calls and look up docs on that.
+      use rand_chacha::rand_core::SeedableRng;
+      use rand_core::RngCore;
+      use rand_chacha; // 0.3.0
+
+      fn main() {
+          let mut gen = rand_chacha::ChaCha8Rng::seed_from_u64(10);
+          let res: Vec<u64> = (0..100).map(|_| gen.next_u64()).collect();
+          println!("{:?}", res);
+      }
+
+----------------------------
+benchmark the random number generator for time
+  also for runs test.  The range 0..2 on integers may not be well tested
+
+Look into using code like this, with sample iterator.
+This may eliminate some function calls.
+      use rand::{distributions::Uniform, Rng}; // 0.8.0
+
+      fn main() {
+          let range = Uniform::from(0..20);
+          let values: Vec<u64> = rand::thread_rng().sample_iter(&range).take(100).collect();
+          println!("{:?}", values);
+      }
+
+
+function to validate deck in both ordinal and card form
+
+statistics with runs increasing and decreasing according to NIST docs.
+
+Do long running loop to do a lot of shuffles.
+Save a few thousand in a hash table.
+Check for duplicates.
+
+Make faster in place shuffle.
+
+benchmark or examine the klondike_ranks function to make sure the compiler
+optimized out the initialization of the static array.
+
+benchmark the shuffle function.  A lot of testing is needed.
+So it needs to be fast.
+
+function to print a deck in unicode.
+can unicode be displayed on console, can font be added to console.
+
+Make a pretty print function for cards.  Possibly with colors.
+
+experiment with functions that merely initialize a table.
+See how complicated it can get and still be done at compile time.
+
