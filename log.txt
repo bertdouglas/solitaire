@@ -1,4 +1,32 @@
 ------------------------------------------------------------------------
+2023-04-22 Sunday
+
+Yesterday worked all day and half the night.
+But not much got logged.
+
+Rewrote nearly all of the deck module.
+Using closures for array of struct initialization.
+Trying to meet two opposing goals.
+  - pretty code that has all info together one place easy to read
+  - efficient to access with u8 and [u8;n]
+The initializer syntax in rust is weak.  Ask around and they say
+"use a macro".  Well I am not ready for that yet.
+Also rust, unlike c, will not convert between integer types automatically.
+If you use a neat quoted string, which is easy to read, then you have
+a type &str, which takes a lot of clutter to convert to [u8;n]
+If you code the source as ["a","b","c"] then the code is harder to read
+and you get long lines, or folded lines
+
+Right now I have neat source initializers and compact targert but
+a whole lot of code to convert one to the other.
+
+Had a nice experience with the iterator and any()
+It seems like things just work with iterators.
+That part of the compiler is more polished.
+
+Try to convert some more code to iterators.
+
+------------------------------------------------------------------------
 2023-04-22 Saturday
 
 Thinking ahead to what will be needed.
