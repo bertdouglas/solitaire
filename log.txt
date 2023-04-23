@@ -1,4 +1,31 @@
 ------------------------------------------------------------------------
+2023-04-22 Saturday
+
+Thinking ahead to what will be needed.
+Ability to display a card.
+Standard abbreviations for debug display
+
+Testing if a card is red or black.
+Seeing how good the inlining is, I think it best to provide a method
+for this, even if it is a trivial method.  Hide the masks from the api.
+
+ability to manipulate game states, and move cards from one pile to
+another.
+
+Dealing with game states seems sufficiently large and different
+so that it should be a separate module from the "deck" module.
+
+perhaps deck is not the best name.  Maybe "card" would be better.
+
+Do we really need the ordinal deck?  It was as a bridge to faster
+shuffle, by shuffling the ordinals, then looking up the bitcode.
+Extra lookup seems to take enough time to overcome any speed of
+working with ordinals.
+
+For today, continue and do more unit tests and get rid of some of
+the unused code warnings.
+
+------------------------------------------------------------------------
 2023-04-21 Friday
 
 Changed a lot of init to lazy static.
