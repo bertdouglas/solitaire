@@ -6,7 +6,9 @@ Ignore any possible future where there may be different kinds of
 cards or decks.
 */
 
+#![allow(dead_code)]
 use once_cell::sync::Lazy;
+use std::str;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -53,32 +55,24 @@ enum RankCode {
 
 const N_RANK_CODE:usize = RankCode::RF as usize + 1;
 
-type Repr1 = [u8;1];
-type Repr2 = [u8;2];
-type Name =  [u8;10];
+const RANK_BUF_LEN:usize = 1 + 2 + 10;
 
 #[derive(Clone, Copy, Debug, Default)]
-struct RankInfo {
-    index : u8,
-    code  : u8,
-    next  : u8,
-    repr1 : Repr1,
-    repr2 : Repr2,
-    name  : Name,
-}
-
-fn copy_u8_slice(src:&[u8],dst:&mut [u8]) {
-    assert_eq!(src.len(), dst.len());
-    for i in 0..dst.len() {
-        dst[i] = src[i];
-    }
+struct RankInfo<'a> {
+    index  : u8,
+    code   : u8,
+    next   : u8,
+    repr1  : &'a[u8],  // these slices point to buffer in struct
+    repr2  : &'a[u8],
+    name   : &'a[u8],
+    buffer : [u8;RANK_BUF_LEN],
 }
 
 static RANK_INFO:Lazy<[RankInfo;N_RANK_CODE]> = Lazy::new(|| {
     use RankCode::*;
     let ri_blank:RankInfo = Default::default();
     let mut ari:[RankInfo;N_RANK_CODE] = [ri_blank;N_RANK_CODE];
-    let mut t = |
+    let mut t = move |
         i     : usize,
         code  : RankCode,
         next  : RankCode,
@@ -86,12 +80,23 @@ static RANK_INFO:Lazy<[RankInfo;N_RANK_CODE]> = Lazy::new(|| {
         repr2 : &str,
         name  : &str,
     | {
+        println!("rank info init {}",i);
         ari[i].index = i as u8;
         ari[i].code  = code as u8;
         ari[i].next  = next as u8;
-        copy_u8_slice(repr1.as_bytes(), &mut ari[i].repr1);
-        copy_u8_slice(repr2.as_bytes(), &mut ari[i].repr2);
-        copy_u8_slice(name.as_bytes(),  &mut ari[i].name);
+
+        let mut sbuf = String::with_capacity(RANK_BUF_LEN).to_owned();
+        sbuf.push_str(repr1);
+        sbuf.push_str(repr2);
+        sbuf.push_str(name);
+        ari[i].buffer = sbuf.as_bytes().try_into().unwrap();
+
+        let end_repr1 = 0         + 1;
+        let end_repr2 = end_repr1 + 2;
+        let end_name  = end_repr2 + name.len();
+        ari[i].repr1  = &ari[i].buffer[        0..end_repr1];
+        ari[i].repr2  = &ari[i].buffer[end_repr1..end_repr2];
+        ari[i].name   = &ari[i].buffer[end_repr2..end_name ];
     };
     //  index    code   next   repr1    repr2    name
     t(   0x0,     R0,    R0,    "Z",     "R0",   "Reserved_0" );
@@ -113,14 +118,19 @@ static RANK_INFO:Lazy<[RankInfo;N_RANK_CODE]> = Lazy::new(|| {
     ari
 });
 
-#[test]
-fn test_ranks() {
+pub fn test_ranks() {
     let ri = &RANK_INFO;
     for i in 0..ri.len() {
+        println!("test_ranks {}",i);
         assert_eq!(i, ri[i].index as usize);
         assert_eq!(i, ri[i].code as usize);
-        assert_eq!(format!("{:?}",ri[i].code), ri[i].repr2);
-        // FIXME "next" field not tested
+        let t:&str = &format!("{:?}",ri[i].code);
+        println!("foo {}",t);
+        let code:&[u8] = t.as_bytes().try_into().unwrap();
+        assert_eq!(code, ri[i].repr2);
+        assert!( ri[i].next == (RankCode::R0 as u8)
+            ||   ri[i].next == ri[i+1].code
+        );
     }
 }
 
@@ -232,7 +242,7 @@ static SUIT_INFO:Lazy<[SuitInfo;N_SUIT_CODE]> = Lazy::new(|| {
         asi[i].color    = color as u8;
         asi[i].to_uni   = to_uni;
         asi[i].from_uni = from_uni as u8;
-        copy_u8_slice(name.as_bytes(), &mut asi[i].name);
+        asi[i].name     = name.as_bytes().try_into().unwrap();
     };
     //                            to       from
     //  index   code   color    unicode   unicode   name
@@ -244,12 +254,9 @@ static SUIT_INFO:Lazy<[SuitInfo;N_SUIT_CODE]> = Lazy::new(|| {
 });
 
 static SUITS:Lazy<[u8;N_SUIT_CODE]> = Lazy::new(|| {
-    let info = &SUIT_INFO;
-    let mut suits:[u8;N_SUIT_CODE] = [0;N_SUIT_CODE];
-    for i in 0..N_SUIT_CODE {
-        suits[i] = info[i].code;
-    }
-    suits
+    let v:Vec<u8> = SUIT_INFO.iter().map(|si| si.code).collect();
+    let a:[u8;N_SUIT_CODE] = v.try_into().unwrap();
+    a
 });
 
 #[test]
@@ -495,5 +502,6 @@ A run is a sequence of values that increase or decrease
 //fn runs_test(d:&Deck) {
 //}
 
+*/
 
 // end mod deck --------------------------------------------------------

@@ -26,6 +26,24 @@ That part of the compiler is more polished.
 
 Try to convert some more code to iterators.
 
+Got one success right away.  With compiler hint, learned about
+try_into(), which solves one problem I was having last night.
+
+Learned that there are two kinds of asserts.
+regular assert is always compiled in both for debug and release
+debug_assert is elided in release mode and only present in debug mode
+
+discovered that my way of converting &str to &[u8] requires
+them to both be the same size.
+  "abc".as_bytes().try_into().unwrap()
+
+So what to do?
+  keep in the struct
+  convert to string stored elsewhere, with ref
+  pad with spaces and access with trim()
+  probably would be going against convention to put zero terminator
+  try to make a slice that refers to buffer in same struct
+
 ------------------------------------------------------------------------
 2023-04-22 Saturday
 

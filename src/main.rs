@@ -3,6 +3,7 @@ mod deck;
 
 fn main() {
 
+    deck::test_ranks();
     //test_shuffle_move();
 
     let d:deck::Deck = (*deck::BLANK).clone();
