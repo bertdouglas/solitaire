@@ -9,7 +9,6 @@ cards or decks.
 #![allow(dead_code)]
 use std::str;
 use fixedstr::fstr;
-use std::ops::Range;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -50,7 +49,7 @@ enum RankCode {
     Ki,       // King
 }
 const N_RANKS:usize = RankCode::Ki as usize + 1;
-const RANK_RANGE:Range<usize> = 0..N_RANKS;
+const RANK_MASK:u8 = 0xf;
 
 #[derive(Clone, Copy, Debug)]
 struct RankInfo{
@@ -72,8 +71,7 @@ fn rank_info() -> Vec<RankInfo> {
         name     : &str,
     | {
         let ri = RankInfo {
-            code     : code,
-            unicode  : unicode,
+            code, unicode,
             repr1    : fstr::from(repr1),
             repr2    : fstr::from(repr2),
             name     : fstr::from(name),
@@ -100,7 +98,7 @@ fn rank_info() -> Vec<RankInfo> {
 #[test]
 fn test_ranks() {
     let ri = rank_info();
-    for i in RANK_RANGE {
+    for i in 0..N_RANKS {
         assert_eq!(i, ri[i].code as usize);
         let code:&str = &format!("{:?}",ri[i].code);
         assert_eq!(code, ri[i].repr2);
@@ -147,10 +145,11 @@ SuitCode   unicode   unicode
 */
 
 // bit masks to extract suit attributes
-static SUIT_RED:u8        = 0x10;
-static SUIT_COLOR_MASK:u8 = 0x10;
-static SUIT_ROUND:u8      = 0x20;
-static SUIT_SHAPE_MASK:u8 = 0x20;
+const SUIT_RED        :u8 = 0x10;
+const SUIT_COLOR_MASK :u8 = 0x10;
+const SUIT_ROUND      :u8 = 0x20;
+const SUIT_SHAPE_MASK :u8 = 0x20;
+const SUIT_MASK       :u8 = 0x30;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -160,8 +159,7 @@ enum SuitCode {
     Cl,         // club
     He,         // heart
 }
-const N_SUIT:usize = SuitCode::He as usize + 1;
-const SUIT_RANGE:Range<usize> = 0..N_SUIT;
+const N_SUITS:usize = SuitCode::He as usize + 1;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -191,10 +189,7 @@ fn suit_info() -> Vec<SuitInfo> {
         name     : &str,
     | {
         let si = SuitInfo {
-            code     : code,
-            color    : color,
-            to_uni   : to_uni,
-            from_uni : from_uni,
+            code, color, to_uni, from_uni,  // same names
             name     : fstr::from(name),
         };
         vsi.push(si);
@@ -211,10 +206,18 @@ fn suit_info() -> Vec<SuitInfo> {
 
 #[test]
 fn test_suits() {
-    // FIXME
+    let vsi = suit_info();
+    for i in 0..N_SUITS {
+        let si = &vsi[i];
+        assert_eq!(i, si.code as usize);
+        let scode:String = format!("{:?}",si.code);
+        let sname:String = si.name.to_string();
+        assert_eq!(scode, sname[0..2]);
+        let red:bool = 0 != (((si.code as u8)<<4) & SUIT_RED);
+        assert_eq!( red, si.color == SuitColor::Red);
+        assert_eq!(!red, si.color == SuitColor::Black);
+    }
 }
-
-/*
 
 /*-----------------------------------------------------------------------
 Encoding of a card in a byte
@@ -235,8 +238,9 @@ Bit 7 must be zero for card bytes.
 
 */
 
-static CARD_UNICODE_BASE:u32 = 0x1F000;
+const CARD_UNICODE_BASE:u32 = 0x1F000;
 
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Card {
     pub code: u8,
 }
@@ -273,41 +277,48 @@ fn pack(uc:&UnpackedCard) -> Card {
 impl Card {
 fn to_unicode(&self) -> char {
     let up = self.unpack();
-    let u:u32 = 0
-        |   CARD_UNICODE_BASE
-        |   (SUIT_INFO[up.suit as usize].to_uni as u32)
-        |   (up.rank as u32);
+    let vsi = &suit_info();
+    let vri = &rank_info();
+    // translate the suit
+    let usuit:u32 = vsi[up.suit as usize].to_uni as u32;
+    // translate the rank
+    let urank:u32 = vri[up.rank as usize].unicode as u32;
+    let u:u32 = CARD_UNICODE_BASE | usuit | urank;
     char::from_u32(u).unwrap()
 }}
 
 impl Card {
 fn from_unicode(c:char) -> Card {
+    let vsi = &suit_info();
+    let vri = &rank_info();
     // unpack the unicode
     let u = c as u32;
-    let     base:u32 = (u & 0xFFFFFF00)  as u32;
-    let mut suit:u8  = (u & 0x000000F0)  as u8;
-    let     rank:u8  = (u & 0x0000000F)  as u8;
+    let ubase:u32 = (u & 0xFFFFFF00)  as u32;
+    let usuit:u8  = (u & 0x000000F0)  as u8;
+    let urank:u8  = (u & 0x0000000F)  as u8;
     // detect bad values
-    assert_eq!(base,CARD_UNICODE_BASE);
-    assert!(suit >= 0xA0 && suit <= 0xD0);
+    assert_eq!(ubase, CARD_UNICODE_BASE);
+    assert!(usuit >= 0xA0 && usuit <= 0xD0);
     // translate suit to internal code
-    suit = (suit >> 4) & 0x3;
-    suit = SUIT_INFO[suit as usize].from_uni;
-    // construct unpacked card
+    let isuit:u8 = (usuit >> 4) & 0x3;
+    let suit:u8 = vsi[isuit as usize].from_uni as u8;
+    // translate rank to internal code (requires search)
+    let ri:&RankInfo = vri.iter()
+        .find(|&&ri| ri.unicode == urank)
+        .unwrap();
+    // construct unpacked card and pack it
     Card::pack ( &UnpackedCard {
         group   : false,
         face_up : false,
         suit    : suit,
-        rank    : rank,
+        rank    : ri.code as u8,
     })
 }}
 
 impl Card {
 fn valid(&self) -> bool {
     let up = self.unpack();
-    true
-    & !up.group
-    & RANKS.iter().any(|&r| r == up.rank)
+    !up.group & (up.rank < N_RANKS as u8)
 }}
 
 impl Card {
@@ -319,64 +330,65 @@ pub fn same_color(&self,other:&Card) -> bool {
 impl Card {
 // other is next ascending rank to self
 pub fn rank_next(&self,other:Card) -> bool {
-    let rs:u8 = self.code & 0xf;
-    let ro:u8 = other.code & 0xf;
-    ro == RANK_INFO[rs as usize].next
+    let rs:u8 = self.code & RANK_MASK;
+    let ro:u8 = other.code & RANK_MASK;
+    rs + 1 == ro
 }}
 
 /*----------------------------------------------------------------------
 Deck object
 */
 
-const NDECK:usize = 52;
+const N_CARDS:usize = N_SUITS * N_RANKS;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Deck {
-    pub kind:Kind,
-    pub cards:[u8;NDECK],
+    pub kind:DeckKind,
+    pub cards:[u8;N_CARDS],
 }
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug)]
-pub enum Kind {
-    Blank,         // not yet initialized
-    Selectors,     // random bits used in shuffling
-    Canonical,     // card codes with bit flags for fast classification
-    Unicode,       // unicode for display
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DeckKind {
+    Selectors,    // random bits used in shuffling
+    Codes,        // card codes with bit flags for fast classification
+    Unicode8,     // unicode lower byte for display
 }
 
-pub static BLANK:Lazy<Deck> = Lazy::new(|| {
-    Deck {
-        kind  : Kind::Blank,
-        cards : [0;NDECK],
-    }
-});
+// new deck
+impl Deck {
+pub fn new(dk:DeckKind) -> Deck {
+    // FIXME implement more kinds
+    assert_eq!(dk, DeckKind::Codes);
 
-// convenient card codes
-pub static CANONICAL:Lazy<Deck> = Lazy::new(|| {
-    let mut out:Deck = (*BLANK).clone();
-    out.kind = Kind::Canonical;
-    let mut i = 0;
-    assert_eq!(out.cards.len(), (*SUITS).len() * (*RANKS).len());
-    for s in (*SUITS).clone() {
-        for r in (*RANKS).clone() {
-            out.cards[i] = (s<<4) | r;
-            i += 1;
+    let mut cards:Vec<u8> = vec![];
+    for s in 0..N_SUITS {
+        for r in 0..N_RANKS {
+            let card:u8 = ((s<<4) | r) as u8;
+            cards.push(card);
         }
     }
-    out
-});
+    Deck {
+        kind: dk,
+        cards: cards.try_into().unwrap(),
+    }
+}}
+
+// test deck for validity
+impl Deck {
+fn valid(&self, dk:DeckKind) -> bool {
+    // FIXME implement more kinds
+    assert_eq!(dk, DeckKind::Codes);
+    // get new reference deck and copy of self for testing
+    let dref = Deck::new(DeckKind::Codes);
+    let mut dtest:Deck = *self;
+    // sort the cards in deck to be tested
+    dtest.cards.sort();
+    // should be the same
+    dtest == dref
+}}
 
 /*
-
-// sort the deck, compare to make_deck()
-fn valid(d:&DeckOrdinals) -> bool {
-    let mut t = DeckOrdinals([0;NDECK]);
-    t.0 = d.0.clone();
-    let u = make_ordinals();
-    t.0.sort();
-    t.0 == u.0
-}
 
 /*----------------------------------------------------------------------
 Shuffle
@@ -456,15 +468,4 @@ A run is a sequence of values that increase or decrease
 
 */
 
-/*----------------------------------------------------------------------
-Static init
-*/
-
-
-
-pub fn init() {
-    init_rank_info();
-    //init_suit_info();
-}
-*/
 // end mod deck --------------------------------------------------------
