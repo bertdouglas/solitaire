@@ -44,6 +44,73 @@ So what to do?
   probably would be going against convention to put zero terminator
   try to make a slice that refers to buffer in same struct
 
+Not working
+
+      error[E0204]: the trait `Copy` may not be implemented for this type
+        --> src/deck.rs:60:17
+         |
+      60 | #[derive(Clone, Copy, Debug, Default)]
+         |                 ^^^^
+      ...
+      65 |     repr1  : [u8],  // these slices point to buffer in struct
+         |     ------------- this field does not implement `Copy`
+
+Obviously I don't understand what is happening with slices.
+Is a slice simply a sequence of bytes?
+Or is it a pointer and length referring to a sequence of bytes
+
+I am tangled up in something too complicated.  The Lazy init requires
+constructing a copy of the needed data structure, which is then returned
+from the closure and copied into the static array of structs.
+
+Too many macros.  Hard to understand or debug.  Probably some corner
+cases in them not handled correctly.  Too much magic.  Get rid of Once
+Cell.  With a little bit of code can do my own init, instead of trying
+to hide it and make it fancy.
+
+Here we go again.  Not sure I am converging.  But the key to performance
+is compact tables.  This is good for cache.  With all the strings and slices
+and references the data must be spread out.
+
+Well, hit a brick wall here as well.  Static have all sorts of restrictions
+and mutable statics are worse.
+
+    error[E0015]: cannot call non-const fn `<RankInfo as Default>::default` in statics
+      --> src/deck.rs:67:35
+       |
+    67 | static RANK_INFO_BLANK:RankInfo = Default::default();
+
+    error[E0015]: cannot call non-const fn `<RankInfo as Default>::default` in statics
+      --> src/deck.rs:67:35
+       |
+    67 | static RANK_INFO_BLANK:RankInfo = Default::default();
+
+I think that I am beginning to get the message.  Forget about statics.
+
+One more time.  Make a function that constructs the rankinfo
+and returns a reference.  Hope the compiler optimizes it.
+
+Ok.  That worked ok. Can't return a reference.  That leaves ownership
+inside the function.  But returning the whole thing works. Obviously I
+don't fully understand it. Not many problems.  Good stuff with the fstr
+type strings.  Had to get rid of derive Default on the RankInfo.  But
+it was not needed in new scheme, as constructing each value and then
+pushing to a vector.
+
+Built for release and looked for the function.  It was not there.
+Looked in main.  All inlined.  Less than one screen of code, all of
+it doing the test function.
+
+how can compiler be this smart?
+
+So I got it cache friendly, all in code section in immutable table,
+and easy to read.  Success.
+
+There is problem with the rank_next() concept.  The rule for testing
+for next is broken at the unused card, the knight.  Maybe should
+just get rid of the unused cards.  Too tired to do it now.
+Still have to rewrite the rest of the init.
+
 ------------------------------------------------------------------------
 2023-04-22 Saturday
 

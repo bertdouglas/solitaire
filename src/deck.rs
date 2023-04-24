@@ -7,8 +7,9 @@ cards or decks.
 */
 
 #![allow(dead_code)]
-use once_cell::sync::Lazy;
 use std::str;
+use fixedstr::fstr;
+use std::ops::Range;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -25,18 +26,16 @@ Commercial licenses may be negotiated by contacting me at:
 /*----------------------------------------------------------------------
 Encoding of card ranks
 
-Ranks are encoded using the lower 4 bits of the Unicode value.
-See:  https://en.wikipedia.org/wiki/Playing_cards_in_Unicode
-
-The only surprise here is the presence of an extra face card called the
-Knight or Cavalier.  So far, this card is not used.
+Only encode actual cards used. Abandoned using unicode lower bits.
+Instead put unicode ranks in as a new column in RankInfo.  Reverse
+conversion from unicode requires a search.  But this direction seems
+unlikely to be used except for testing.
 */
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum RankCode {
-    R0 = 0,   // Reserved not used
-    Ac,       // Ace
+    Ac = 0,   // Ace
     N2,       // Two
     N3,       // Three
     N4,       // Four
@@ -47,111 +46,66 @@ enum RankCode {
     N9,       // Nine
     NT,       // Ten
     Ja,       // Jack
-    Ca,       // Cavalier (aka Knight)
     Qu,       // Queen
     Ki,       // King
-    RF,       // Reserved not used
+}
+const N_RANKS:usize = RankCode::Ki as usize + 1;
+const RANK_RANGE:Range<usize> = 0..N_RANKS;
+
+#[derive(Clone, Copy, Debug)]
+struct RankInfo{
+    code    : RankCode,
+    unicode : u8,
+    repr1   : fstr<1>,
+    repr2   : fstr<2>,
+    name    : fstr<10>,
 }
 
-const N_RANK_CODE:usize = RankCode::RF as usize + 1;
-
-const RANK_BUF_LEN:usize = 1 + 2 + 10;
-
-#[derive(Clone, Copy, Debug, Default)]
-struct RankInfo<'a> {
-    index  : u8,
-    code   : u8,
-    next   : u8,
-    repr1  : &'a[u8],  // these slices point to buffer in struct
-    repr2  : &'a[u8],
-    name   : &'a[u8],
-    buffer : [u8;RANK_BUF_LEN],
-}
-
-static RANK_INFO:Lazy<[RankInfo;N_RANK_CODE]> = Lazy::new(|| {
+fn rank_info() -> Vec<RankInfo> {
+    let mut vri:Vec<RankInfo> = vec![];
     use RankCode::*;
-    let ri_blank:RankInfo = Default::default();
-    let mut ari:[RankInfo;N_RANK_CODE] = [ri_blank;N_RANK_CODE];
-    let mut t = move |
-        i     : usize,
-        code  : RankCode,
-        next  : RankCode,
-        repr1 : &str,
-        repr2 : &str,
-        name  : &str,
+    let mut t = |
+        code     : RankCode,
+        unicode  : u8,
+        repr1    : &str,
+        repr2    : &str,
+        name     : &str,
     | {
-        println!("rank info init {}",i);
-        ari[i].index = i as u8;
-        ari[i].code  = code as u8;
-        ari[i].next  = next as u8;
-
-        let mut sbuf = String::with_capacity(RANK_BUF_LEN).to_owned();
-        sbuf.push_str(repr1);
-        sbuf.push_str(repr2);
-        sbuf.push_str(name);
-        ari[i].buffer = sbuf.as_bytes().try_into().unwrap();
-
-        let end_repr1 = 0         + 1;
-        let end_repr2 = end_repr1 + 2;
-        let end_name  = end_repr2 + name.len();
-        ari[i].repr1  = &ari[i].buffer[        0..end_repr1];
-        ari[i].repr2  = &ari[i].buffer[end_repr1..end_repr2];
-        ari[i].name   = &ari[i].buffer[end_repr2..end_name ];
+        let ri = RankInfo {
+            code     : code,
+            unicode  : unicode,
+            repr1    : fstr::from(repr1),
+            repr2    : fstr::from(repr2),
+            name     : fstr::from(name),
+        };
+        vri.push(ri);
     };
-    //  index    code   next   repr1    repr2    name
-    t(   0x0,     R0,    R0,    "Z",     "R0",   "Reserved_0" );
-    t(   0x1,     Ac,    N2,    "A",     "Ac",   "Ace"        );
-    t(   0x2,     N2,    N3,    "2",     "B2",   "Two"        );
-    t(   0x3,     N3,    N4,    "3",     "N3",   "Three"      );
-    t(   0x4,     N4,    N5,    "4",     "N4",   "Four"       );
-    t(   0x5,     N5,    N6,    "5",     "N5",   "Five"       );
-    t(   0x6,     N6,    N7,    "6",     "N5",   "Six"        );
-    t(   0x7,     N7,    N8,    "7",     "N7",   "Seven"      );
-    t(   0x8,     N8,    N9,    "8",     "N8",   "Eight"      );
-    t(   0x9,     N9,    NT,    "9",     "N9",   "Nine"       );
-    t(   0xA,     NT,    Ja,    "T",     "NT",   "Ten"        );
-    t(   0xB,     Ja,    Qu,    "J",     "Ja",   "Jack"       );
-    t(   0xC,     Ca,    R0,    "C",     "Ca",   "Knight"     );
-    t(   0xD,     Qu,    Ki,    "Q",     "Qu",   "Queen"      );
-    t(   0xE,     Ki,    R0,    "K",     "Ki",   "King"       );
-    t(   0xF,     RF,    R0,    "F",     "rF",   "Reserved_F" );
-    ari
-});
-
-pub fn test_ranks() {
-    let ri = &RANK_INFO;
-    for i in 0..ri.len() {
-        println!("test_ranks {}",i);
-        assert_eq!(i, ri[i].index as usize);
-        assert_eq!(i, ri[i].code as usize);
-        let t:&str = &format!("{:?}",ri[i].code);
-        println!("foo {}",t);
-        let code:&[u8] = t.as_bytes().try_into().unwrap();
-        assert_eq!(code, ri[i].repr2);
-        assert!( ri[i].next == (RankCode::R0 as u8)
-            ||   ri[i].next == ri[i+1].code
-        );
-    }
+    //  code    unicode    repr1    repr2    name
+    t(   Ac,      0x1,      "A",     "Ac",   "Ace"     );
+    t(   N2,      0x2,      "2",     "N2",   "Two"     );
+    t(   N3,      0x3,      "3",     "N3",   "Three"   );
+    t(   N4,      0x4,      "4",     "N4",   "Four"    );
+    t(   N5,      0x5,      "5",     "N5",   "Five"    );
+    t(   N6,      0x6,      "6",     "N6",   "Six"     );
+    t(   N7,      0x7,      "7",     "N7",   "Seven"   );
+    t(   N8,      0x8,      "8",     "N8",   "Eight"   );
+    t(   N9,      0x9,      "9",     "N9",   "Nine"    );
+    t(   NT,      0xA,      "T",     "NT",   "Ten"     );
+    t(   Ja,      0xC,      "J",     "Ja",   "Jack"    );
+    t(   Qu,      0xD,      "Q",     "Qu",   "Queen"   );
+    t(   Ki,      0xE,      "K",     "Ki",   "King"    );
+    vri
 }
 
-type Rank = u8;
-const N_RANKS:usize = 13;
-
-// ranks in standard deck in order
-static RANKS:Lazy<[Rank;N_RANKS]> = Lazy::new(|| {
-    use RankCode::*;
-    let vr:Vec<RankCode> = vec![
-        Ac,N2,N3,N4,N5,
-        N6,N7,N8,N9,NT,
-        Ja,Qu,Ki,
-    ];
-    let mut ar:[Rank;N_RANKS] = [0;N_RANKS];
-    assert_eq!(ar.len(), vr.len());
-    for i in 0..ar.len() {
-        ar[i] = vr[i] as Rank;
+#[test]
+fn test_ranks() {
+    let ri = rank_info();
+    for i in RANK_RANGE {
+        assert_eq!(i, ri[i].code as usize);
+        let code:&str = &format!("{:?}",ri[i].code);
+        assert_eq!(code, ri[i].repr2);
     }
-    ar
-});
+}
 
 /*----------------------------------------------------------------------
 Encoding of card suit
@@ -199,70 +153,68 @@ static SUIT_ROUND:u8      = 0x20;
 static SUIT_SHAPE_MASK:u8 = 0x20;
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum SuitCode {
     Sp = 0,     // spade
     Di,         // diamond
     Cl,         // club
     He,         // heart
 }
+const N_SUIT:usize = SuitCode::He as usize + 1;
+const SUIT_RANGE:Range<usize> = 0..N_SUIT;
 
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum SuitColor {
     Red = 0,
     Black,
 }
 
-const N_SUIT_CODE:usize = SuitCode::He as usize + 1;
-
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 struct SuitInfo {
-    index    : u8,
-    code     : u8,
-    color    : u8,
+    code     : SuitCode,
+    color    : SuitColor,
     to_uni   : u8,
-    from_uni : u8,
-    name     : [u8;8],
+    from_uni : SuitCode,
+    name     : fstr<8>,
 }
 
-static SUIT_INFO:Lazy<[SuitInfo;N_SUIT_CODE]> = Lazy::new(|| {
+fn suit_info() -> Vec<SuitInfo> {
     use SuitCode::*;
     use SuitColor::*;
-    let si_blank:SuitInfo = Default::default();
-    let mut asi:[SuitInfo;N_SUIT_CODE] = [si_blank;N_SUIT_CODE];
+    let mut vsi:Vec<SuitInfo> = vec![];
     let mut t = |
-        i        : usize,
         code     : SuitCode,
         color    : SuitColor,
         to_uni   : u8,
         from_uni : SuitCode,
         name     : &str,
     | {
-        asi[i].index    = i as u8;
-        asi[i].code     = code as u8;
-        asi[i].color    = color as u8;
-        asi[i].to_uni   = to_uni;
-        asi[i].from_uni = from_uni as u8;
-        asi[i].name     = name.as_bytes().try_into().unwrap();
+        let si = SuitInfo {
+            code     : code,
+            color    : color,
+            to_uni   : to_uni,
+            from_uni : from_uni,
+            name     : fstr::from(name),
+        };
+        vsi.push(si);
     };
-    //                            to       from
-    //  index   code   color    unicode   unicode   name
-    t(    0,     Sp,   Black,    0xA0,       Di,    "Spades",   );
-    t(    1,     Di,   Red,      0xC0,       Cl,    "Diamonds", );
-    t(    2,     Cl,   Black,    0xD0,       Sp,    "Clubs",    );
-    t(    3,     He,   Red,      0xB0,       He,    "Hearts",   );
-    asi
-});
+    //                    to       from
+    //  code   color    unicode   unicode    name
+    t(   Sp,   Black,    0xA0,       Di,    "Spades",   );
+    t(   Di,   Red,      0xC0,       Cl,    "Diamonds", );
+    t(   Cl,   Black,    0xD0,       Sp,    "Clubs",    );
+    t(   He,   Red,      0xB0,       He,    "Hearts",   );
+    vsi
+}
 
-static SUITS:Lazy<[u8;N_SUIT_CODE]> = Lazy::new(|| {
-    let v:Vec<u8> = SUIT_INFO.iter().map(|si| si.code).collect();
-    let a:[u8;N_SUIT_CODE] = v.try_into().unwrap();
-    a
-});
 
 #[test]
 fn test_suits() {
     // FIXME
 }
+
+/*
 
 /*-----------------------------------------------------------------------
 Encoding of a card in a byte
@@ -504,4 +456,15 @@ A run is a sequence of values that increase or decrease
 
 */
 
+/*----------------------------------------------------------------------
+Static init
+*/
+
+
+
+pub fn init() {
+    init_rank_info();
+    //init_suit_info();
+}
+*/
 // end mod deck --------------------------------------------------------

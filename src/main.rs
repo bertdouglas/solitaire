@@ -1,14 +1,12 @@
 mod deck;
-//pub use crate::deck;
 
 fn main() {
-
-    deck::test_ranks();
+    println!("must do something");
     //test_shuffle_move();
 
-    let d:deck::Deck = (*deck::BLANK).clone();
+/*
     println!("{:?}",d);
-    /*
+
     for _ in 0..10 {
         let sel = get_rand_bits();
         shuffle_move(&mut deck.0,&sel);
