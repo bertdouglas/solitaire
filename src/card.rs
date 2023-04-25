@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------
-Deck Module
+Card Module
 
-Create and manipulate a standard deck of 52 cards.
+Create and manipulate cards and decks of cards.
 Ignore any possible future where there may be different kinds of
 cards or decks.
 */
@@ -9,6 +9,9 @@ cards or decks.
 #![allow(dead_code)]
 use std::str;
 use fixedstr::fstr;
+use rand::Rng;
+use std::collections::HashMap;
+
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -254,6 +257,16 @@ struct UnpackedCard {
 }
 
 impl Card {
+fn as_u8(self) -> u8 {
+    self.code as u8
+}}
+
+impl Card {
+fn from_u8(card:u8) -> Card {
+    Card { code : card }
+}}
+
+impl Card {
 fn unpack(&self) -> UnpackedCard {
     UnpackedCard {
         group   : ( self.code & 0b1_0_00_0000) != 0,
@@ -341,26 +354,19 @@ Deck object
 
 const N_CARDS:usize = N_SUITS * N_RANKS;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Deck {
-    pub kind:DeckKind,
-    pub cards:[u8;N_CARDS],
+    pub cards:Vec<u8>,
 }
 
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DeckKind {
-    Selectors,    // random bits used in shuffling
-    Codes,        // card codes with bit flags for fast classification
-    Unicode8,     // unicode lower byte for display
+#[derive(Clone, Debug, PartialEq)]
+pub struct Selectors {
+    pub sels:Vec<u8>,
 }
 
-// new deck
+// new standard deck in canonical order
 impl Deck {
-pub fn new(dk:DeckKind) -> Deck {
-    // FIXME implement more kinds
-    assert_eq!(dk, DeckKind::Codes);
-
+pub fn new() -> Deck {
     let mut cards:Vec<u8> = vec![];
     for s in 0..N_SUITS {
         for r in 0..N_RANKS {
@@ -368,27 +374,29 @@ pub fn new(dk:DeckKind) -> Deck {
             cards.push(card);
         }
     }
-    Deck {
-        kind: dk,
-        cards: cards.try_into().unwrap(),
-    }
+    Deck { cards, }
 }}
+
+// random selectors for shuffling a deck
+fn rand_selectors() -> Selectors {
+    let mut rng = rand::thread_rng();
+    let sels:Vec<u8> = (0..N_CARDS)
+        .map(|_| rng.gen_range(0..2))
+        .collect();
+    Selectors{ sels, }
+}
 
 // test deck for validity
 impl Deck {
-fn valid(&self, dk:DeckKind) -> bool {
-    // FIXME implement more kinds
-    assert_eq!(dk, DeckKind::Codes);
+fn valid(&self) -> bool {
     // get new reference deck and copy of self for testing
-    let dref = Deck::new(DeckKind::Codes);
-    let mut dtest:Deck = *self;
+    let dref = Deck::new();
+    let mut dtest:Deck = (*self).clone();
     // sort the cards in deck to be tested
     dtest.cards.sort();
     // should be the same
     dtest == dref
 }}
-
-/*
 
 /*----------------------------------------------------------------------
 Shuffle
@@ -400,63 +408,61 @@ Simulate a human shuffle
 - collect cards in new pile
 - repeat several times
 
-This requires a lot of moving of data, but it is simple and easy to get right.
-A more complicated version can be done in place.
+Allow caller to supply some selectors so that results can be
+deterministic.  This is convenient when comparing different shuffle
+functions.
 */
 
-fn get_rand_bits() -> Deck {
-    let mut s:Deck = DECK_BLANK;
-    s.kind = DeckKind::Selectors,
-    let mut rng = rand::thread_rng();
-    for i in 0..NDECK {
-        s.cards[i] = rng.gen_range(0..2);
-    }
-    s
-}
-
-fn shuffle_move(d:&mut Deck, s:&Deck) {
-    assert!(s.kind == DeckKind::Selectors);
-    let mut v0 = d[..NDECK/2].to_vec();
-    let mut v1 = d[NDECK/2..].to_vec();
-    for i in 0..NDECK {
-        d.cards[i] = match (s.cards[i], v0.len()>0, v1.len()>0) {
-            (0, true , _     ) => v0.remove(0),
-            (1, _    , true  ) => v1.remove(0),
-            (0, false, true  ) => v1.remove(0),
-            (1, true , false ) => v0.remove(0),
-            _                  => panic!(),
+fn shuffle(d:&mut Deck, mut vsels:Vec<Selectors>, n:usize) {
+    for _ in 0..n {
+        // replenish selectors if empty
+        if 0 == vsels.len() {
+            vsels.push(rand_selectors());
         }
+
+        // get slices for each half of the deck
+        let v0 = &d.cards[..N_CARDS/2];
+        let v1 = &d.cards[N_CARDS/2..];
+        // new deck after this step
+        let mut dnew:Vec<u8> = vec![];
+        // consume selectors
+        let sels = vsels.remove(0).sels;
+
+        let mut i0 = 0;
+        let mut i1 = 0;
+        for s in sels {
+            let c = match (s, i0 < N_CARDS/2, i1 < N_CARDS/2) {
+                (0, true , _     ) => { let c = v0[i0]; i0+=1; c},
+                (1, _    , true  ) => { let c = v1[i1]; i1+=1; c},
+                (0, false, true  ) => { let c = v1[i1]; i1+=1; c},
+                (1, true , false ) => { let c = v0[i0]; i0+=1; c},
+                 _                 => panic!(),
+            };
+            dnew.push(c);
+        }
+        *d = Deck {cards : dnew};
     }
 }
 
-fn test_shuffle_move() {
+fn test_shuffle() {
     println!("Start test_shuffle_move");
     // shuffle many times and put decks in hashmap
     // if there is a duplicate, we fail the test
     const NLOOPS:usize = 1000000;
-    let mut deck = make_ordinals();
+    let mut deck = Deck::new();
     let mut hm:HashMap<Deck, usize> = HashMap::new();
     for i in 0..NLOOPS {
         if 0==(i%(NLOOPS/20)) {
             println!("shuffling {}",i);
-            println!("{:?}",deck.0);
+            println!("{:?}",&deck.cards);
         }
-        for j in 0..10 {
-            let sel = get_rand_bits();
-            shuffle_move(&mut deck.0,&sel);
-        }
-        assert_eq!(None, hm.insert(deck.0, i));
+        shuffle(&mut deck, vec![], 10);
+
+        assert_eq!(None, hm.insert(deck.clone(), i));
     }
-    assert!(valid_deck(&deck));
+    assert!(deck.valid());
     println!("Finished test_shuffle_move\n");
 }
-
-fn shuffle_in_place(d:&mut DeckOrdinals,s:&DeckSelectors) {
-    let i0:usize = 0;
-    let i1:usize = NDECK/2;
-    let mut p = DeckOrdinals([0;NDECK]);
-}
-
 
 /*----------------------------------------------------------------------
 Test if deck is random based on number of runs
@@ -465,7 +471,5 @@ A run is a sequence of values that increase or decrease
 
 //fn runs_test(d:&Deck) {
 //}
-
-*/
 
 // end mod deck --------------------------------------------------------
