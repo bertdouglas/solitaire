@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 fixedstr = "0.2.10"
 rand = "0.8.5"
+strum = "0.24.1"

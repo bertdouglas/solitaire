@@ -11,7 +11,7 @@ use std::str;
 use fixedstr::fstr;
 use rand::Rng;
 use std::collections::HashMap;
-
+use std::time::{SystemTime};
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -413,7 +413,8 @@ deterministic.  This is convenient when comparing different shuffle
 functions.
 */
 
-fn shuffle(d:&mut Deck, mut vsels:Vec<Selectors>, n:usize) {
+impl Deck {
+pub fn shuffle(&mut self, mut vsels:Vec<Selectors>, n:usize) {
     for _ in 0..n {
         // replenish selectors if empty
         if 0 == vsels.len() {
@@ -421,8 +422,8 @@ fn shuffle(d:&mut Deck, mut vsels:Vec<Selectors>, n:usize) {
         }
 
         // get slices for each half of the deck
-        let v0 = &d.cards[..N_CARDS/2];
-        let v1 = &d.cards[N_CARDS/2..];
+        let v0 = &self.cards[..N_CARDS/2];
+        let v1 = &self.cards[N_CARDS/2..];
         // new deck after this step
         let mut dnew:Vec<u8> = vec![];
         // consume selectors
@@ -440,28 +441,59 @@ fn shuffle(d:&mut Deck, mut vsels:Vec<Selectors>, n:usize) {
             };
             dnew.push(c);
         }
-        *d = Deck {cards : dnew};
+        *self = Deck {cards : dnew};
     }
+}}
+
+fn timestamp() -> u128 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
 }
 
-fn test_shuffle() {
-    println!("Start test_shuffle_move");
+fn duration(t1:&u128, t2:&u128) -> f64 {
+    assert!(t2 > t1);
+    /*
+    Timestamps are in nanoseconds in u128.  This will not fit in a f64.
+    Subtract first. For durations less than 1 day, there should only be
+    about 16 bits of seconds. It takes about 30 bits to represent
+    nanoseconds giving about 46 bits total.  This is less than the 51
+    bits available in f64.
+    */
+    let nu:u128 = t2 - t1;
+    let nf:f64 = nu as f64;
+     * 1e-9
+}
+
+pub fn test_shuffle() {
+    println!("Start test_shuffle");
+    let start:u128 = timestamp();
+
     // shuffle many times and put decks in hashmap
     // if there is a duplicate, we fail the test
-    const NLOOPS:usize = 1000000;
+    const NSHUFFLES:usize = 1000000;
+    const NROUNDS:usize = 10;
     let mut deck = Deck::new();
     let mut hm:HashMap<Deck, usize> = HashMap::new();
-    for i in 0..NLOOPS {
-        if 0==(i%(NLOOPS/20)) {
+    for i in 0..NSHUFFLES {
+        if 0==(i%(NSHUFFLES/20)) {
             println!("shuffling {}",i);
             println!("{:?}",&deck.cards);
         }
-        shuffle(&mut deck, vec![], 10);
-
+        deck.shuffle(vec![], NROUNDS);
         assert_eq!(None, hm.insert(deck.clone(), i));
     }
     assert!(deck.valid());
-    println!("Finished test_shuffle_move\n");
+
+    let end:u128 = timestamp();
+    let dur:f64 = duration(&start, &end);
+    println!("/nFinished test_shuffle");
+    println!("Elapsed time seconds: {}", dur);
+    println!("nrounds : {}  nshuffles: {}", NROUNDS, NSHUFFLES);
+    println!("Insert into hash table and check for duplicates");
+    let rate:f64 = (NSHUFFLES as f64) * (NROUNDS as f64) / dur;
+    println!("Shuffles/second rate: {}", rate);
 }
 
 /*----------------------------------------------------------------------

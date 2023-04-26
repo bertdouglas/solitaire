@@ -1,5 +1,22 @@
 ------------------------------------------------------------------------
-2023-04-22 Sunday
+2023-04-25 Tuesday
+
+Worked last night.  Did not make any logs.
+
+Today got shuffle test going.
+Added timestamps to determine shuffle rate.
+It is coming back as 1.5 million/second.
+It is hard to see how you can even get 52 random numbers in less
+than a microsecond.
+
+So far everything seems to be working correctly as soon as compiler
+bugs are removed.  Hard to believe.
+
+Need to check that work is actually being done.
+Perhaps try some of the benchmark features of rust.
+
+------------------------------------------------------------------------
+2023-04-23 Sunday
 
 Yesterday worked all day and half the night.
 But not much got logged.
