@@ -1,9 +1,37 @@
 
 mod card;
+mod deck;
+mod group;
+mod misc;
 
 fn main() {
 
-    card::test_shuffle();
+    //deck::test_shuffle();
+
+    use colored::Colorize;
+
+    println!("{}","       ".truecolor(0,255,0).on_truecolor(0,255,0));
+
+
+    let s = ""      .to_string()
+        + &"  "     .truecolor(0,255,0)  .on_truecolor(0,255,0)       .to_string()
+        + &"10\u{2665}"      .truecolor(255,0,0)    .on_truecolor(255,255,255).bold().underline()   .to_string()
+        + &"  "     .truecolor(0,255,0)  .on_truecolor(0,255,0)       .to_string()
+        ;
+
+    let t = ""      .to_string()
+        + &"  "     .truecolor(0,255,0)  .on_truecolor(0,255,0)       .to_string()
+        + &"A \u{2660}"      .truecolor(0,0,0)    .on_truecolor(255,255,255).bold().underline()   .to_string()
+        + &"  "     .truecolor(0,255,0)  .on_truecolor(0,255,0)       .to_string()
+        ;
+
+
+    println!("{}",s);
+    println!("{}",t);
+
+
+    println!("{}","       ".truecolor(0,255,0).on_truecolor(0,255,0));
+
 
 /*
     println!("{:?}",d);

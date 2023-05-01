@@ -1,4 +1,97 @@
 ------------------------------------------------------------------------
+2023-04-30 Sunday
+
+Found that there are unicode characters in standard linux
+console fond that represent card suits. Sadly they are almost
+too small to see.  The codes are u2660 to u2667.
+
+    println!("\u{2660} \u{2661} \u{2662} \u{2663} ");
+    println!("\u{2664} \u{2665} \u{2666} \u{2667} ");
+
+    ♠ ♡ ♢ ♣
+    ♤ ♥ ♦ ♧
+
+It looks like the solid black ones would be most useful.
+Still I wonder if using a single letter abbreviation might be easier
+to read.  SHDC  ♠♥♦♣
+
+It is possible to increase font size on console.  But this makes it
+fill the screen, and also makes regular letters bigger as well.
+
+I wonder about color.
+
+    use colored::Colorize;
+    println!("{}","\u{2660} \u{2661} \u{2662} \u{2663} ".red().on_white() );
+    println!("{}","\u{2664} \u{2665} \u{2666} \u{2667} ".red().on_white() );
+    println!("{}","\u{2660} \u{2661} \u{2662} \u{2663} ".black().on_white() );
+    println!("{}","\u{2664} \u{2665} \u{2666} \u{2667} ".black().on_white() );
+
+This works. Although the white is not really white.  More like a light grey.
+
+I want to make a simple display that is functional, but not
+skeuomorphic like the usual solitaire games. No overlapping cards. I
+just want to get working display as easy as possible, and generic as
+possible.
+
+Decide to still with plain text, no special characters.
+Experiment more with color.
+
+Well the 8 traditional colors are not right.
+Use so called truecolor rgb instead.  At least with the "colored" crate.
+
+Not sure how much abbreviation is appropriate.
+What is the maximum number of solitaire cards in a pile or group?
+in the Tableau, 13 cards k through a
+Same in the foundation
+
+Initial deal has 7 piles in the tableau with 1 through 7 cards
+so the sum is 7*8/2 = 28
+So the stock pile has initially 52 - 28 = 24 cards
+So that is the biggest pile initially
+If all are displayed, using 3 characters each, it takes 96 columns.
+Doable.
+
+How many piles total, stock, waste, f1 to f4 t1 to t7
+2+4+7 = 13
+The waste does not need to be displayed, so only 12
+There are usually 24 lines, should be enough
+Many piles, as in tableau will have to be adjacent
+
+I am thinking about horizontal piles, turned 90 degrees normal.
+Right to left, instead of top down.  This could be done without
+any heavy duty console engine.
+
+Try 2460 block of unicode in console.\
+Works.
+
+installed a rust solitaire game from
+https://github.com/florimondmanca/solitaire-rs
+
+No docs.  figured out some.  Seems incomplete. Used a
+cursor that points to a pile.  Space bar selects.  Then move cursor, then
+hit space again.  Enter key moves ace to foundation.
+Can't figure out how to get next card from stock.
+Some definite bugs.  Cursor disappears when it is on the selected pile.
+But it is a good demo of how to do vertical layout on console.
+Now obvious that anything without drag and drop is going to be a pain.
+The suit symbols were readable.
+
+
+
+
+------------------------------------------------------------------------
+2023-04-25 Wednesday
+
+Look more at speed.  Is it reasonable.
+Assume 1 microsecond per shuffle.
+52 cards
+1 instruction per nanosecond
+that is 1000/52 = 19 instructions per card
+Does not seem reasonable.
+
+Take a look at assembly code.
+
+------------------------------------------------------------------------
 2023-04-25 Tuesday
 
 Worked last night.  Did not make any logs.

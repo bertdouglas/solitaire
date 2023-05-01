@@ -9,21 +9,6 @@ cards or decks.
 #![allow(dead_code)]
 use std::str;
 use fixedstr::fstr;
-use rand::Rng;
-use std::collections::HashMap;
-use std::time::{SystemTime};
-
-/*----------------------------------------------------------------------
-(c) Copyright Bert Douglas 2023.
-
-This is an original work of Bert Douglas, begun in 2023.  It is
-available for use according to the terms of this license:
-    GNU Affero General Public License v3.0 or later
-    https://www.gnu.org/licenses/agpl-3.0.txt
-
-Commercial licenses may be negotiated by contacting me at:
-  <georgehdouglas@gmail.com>
-*/
 
 /*----------------------------------------------------------------------
 Encoding of card ranks
@@ -144,13 +129,12 @@ SuitCode   unicode   unicode
    0         0xA      0b10
    3         0xB      0b11
 ========   =======   =======
-
 */
 
 // bit masks to extract suit attributes
-const SUIT_RED        :u8 = 0x10;
+const SUIT_IS_RED     :u8 = 0x10;
 const SUIT_COLOR_MASK :u8 = 0x10;
-const SUIT_ROUND      :u8 = 0x20;
+const SUIT_IS_ROUND   :u8 = 0x20;
 const SUIT_SHAPE_MASK :u8 = 0x20;
 const SUIT_MASK       :u8 = 0x30;
 
@@ -206,7 +190,6 @@ fn suit_info() -> Vec<SuitInfo> {
     vsi
 }
 
-
 #[test]
 fn test_suits() {
     let vsi = suit_info();
@@ -216,7 +199,7 @@ fn test_suits() {
         let scode:String = format!("{:?}",si.code);
         let sname:String = si.name.to_string();
         assert_eq!(scode, sname[0..2]);
-        let red:bool = 0 != (((si.code as u8)<<4) & SUIT_RED);
+        let red:bool = 0 != (((si.code as u8)<<4) & SUIT_IS_RED);
         assert_eq!( red, si.color == SuitColor::Red);
         assert_eq!(!red, si.color == SuitColor::Black);
     }
@@ -249,46 +232,59 @@ pub struct Card {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-struct UnpackedCard {
-    group   : bool,
-    face_up : bool,
-    suit    : u8,
-    rank    : u8,
+pub struct CardUnpacked {
+    pub group   : bool,
+    pub face_up : bool,
+    pub suit    : u8,
+    pub rank    : u8,
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct CardInfo {
+    pub n_suits:  usize,
+    pub n_ranks:  usize,
+    pub n_cards:  usize,
+}
+
+// methods
 impl Card {
-fn as_u8(self) -> u8 {
+
+pub fn card_info() -> CardInfo {
+    CardInfo {
+        n_suits:  N_SUITS,
+        n_ranks:  N_RANKS,
+        n_cards:  N_SUITS * N_RANKS,
+    }
+}
+
+pub fn as_u8(self) -> u8 {
     self.code as u8
-}}
+}
 
-impl Card {
-fn from_u8(card:u8) -> Card {
+pub fn from_u8(card:u8) -> Card {
     Card { code : card }
-}}
+}
 
-impl Card {
-fn unpack(&self) -> UnpackedCard {
-    UnpackedCard {
+pub fn unpack(&self) ->CardUnpacked {
+    CardUnpacked {
         group   : ( self.code & 0b1_0_00_0000) != 0,
         face_up : ( self.code & 0b0_1_00_0000) != 0,
         suit    : ((self.code & 0b0_0_11_0000) >> 4),
         rank    : ((self.code & 0b0_0_00_1111) >> 0),
     }
-}}
+}
 
-impl Card {
-fn pack(uc:&UnpackedCard) -> Card {
+pub fn pack(cu:&CardUnpacked) -> Card {
     Card { code :
         0
-        |  ((uc.group   as u8) << 7)
-        |  ((uc.face_up as u8) << 6)
-        |  ((uc.suit    as u8) << 4)
-        |  ((uc.rank    as u8) << 0)
+        |  ((cu.group   as u8) << 7)
+        |  ((cu.face_up as u8) << 6)
+        |  ((cu.suit    as u8) << 4)
+        |  ((cu.rank    as u8) << 0)
     }
-}}
+}
 
-impl Card {
-fn to_unicode(&self) -> char {
+pub fn to_unicode(&self) -> char {
     let up = self.unpack();
     let vsi = &suit_info();
     let vri = &rank_info();
@@ -298,10 +294,9 @@ fn to_unicode(&self) -> char {
     let urank:u32 = vri[up.rank as usize].unicode as u32;
     let u:u32 = CARD_UNICODE_BASE | usuit | urank;
     char::from_u32(u).unwrap()
-}}
+}
 
-impl Card {
-fn from_unicode(c:char) -> Card {
+pub fn from_unicode(c:char) -> Card {
     let vsi = &suit_info();
     let vri = &rank_info();
     // unpack the unicode
@@ -320,188 +315,30 @@ fn from_unicode(c:char) -> Card {
         .find(|&&ri| ri.unicode == urank)
         .unwrap();
     // construct unpacked card and pack it
-    Card::pack ( &UnpackedCard {
+    Card::pack ( &CardUnpacked {
         group   : false,
         face_up : false,
         suit    : suit,
         rank    : ri.code as u8,
     })
-}}
+}
 
-impl Card {
-fn valid(&self) -> bool {
+pub fn valid(&self) -> bool {
     let up = self.unpack();
     !up.group & (up.rank < N_RANKS as u8)
-}}
+}
 
-impl Card {
 // two cards have the same color
 pub fn same_color(&self,other:&Card) -> bool {
     0 == ((self.code ^ other.code) & SUIT_COLOR_MASK)
-}}
+}
 
-impl Card {
 // other is next ascending rank to self
 pub fn rank_next(&self,other:Card) -> bool {
     let rs:u8 = self.code & RANK_MASK;
     let ro:u8 = other.code & RANK_MASK;
     rs + 1 == ro
-}}
-
-/*----------------------------------------------------------------------
-Deck object
-*/
-
-const N_CARDS:usize = N_SUITS * N_RANKS;
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Deck {
-    pub cards:Vec<u8>,
 }
+}  // end impl Card
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Selectors {
-    pub sels:Vec<u8>,
-}
-
-// new standard deck in canonical order
-impl Deck {
-pub fn new() -> Deck {
-    let mut cards:Vec<u8> = vec![];
-    for s in 0..N_SUITS {
-        for r in 0..N_RANKS {
-            let card:u8 = ((s<<4) | r) as u8;
-            cards.push(card);
-        }
-    }
-    Deck { cards, }
-}}
-
-// random selectors for shuffling a deck
-fn rand_selectors() -> Selectors {
-    let mut rng = rand::thread_rng();
-    let sels:Vec<u8> = (0..N_CARDS)
-        .map(|_| rng.gen_range(0..2))
-        .collect();
-    Selectors{ sels, }
-}
-
-// test deck for validity
-impl Deck {
-fn valid(&self) -> bool {
-    // get new reference deck and copy of self for testing
-    let dref = Deck::new();
-    let mut dtest:Deck = (*self).clone();
-    // sort the cards in deck to be tested
-    dtest.cards.sort();
-    // should be the same
-    dtest == dref
-}}
-
-/*----------------------------------------------------------------------
-Shuffle
-
-Simulate a human shuffle
-- split the cards exactly into two equal groups
-- get a random number 0 or 1, like flipping a coin
-- use random number to determine from which pile to take the next card
-- collect cards in new pile
-- repeat several times
-
-Allow caller to supply some selectors so that results can be
-deterministic.  This is convenient when comparing different shuffle
-functions.
-*/
-
-impl Deck {
-pub fn shuffle(&mut self, mut vsels:Vec<Selectors>, n:usize) {
-    for _ in 0..n {
-        // replenish selectors if empty
-        if 0 == vsels.len() {
-            vsels.push(rand_selectors());
-        }
-
-        // get slices for each half of the deck
-        let v0 = &self.cards[..N_CARDS/2];
-        let v1 = &self.cards[N_CARDS/2..];
-        // new deck after this step
-        let mut dnew:Vec<u8> = vec![];
-        // consume selectors
-        let sels = vsels.remove(0).sels;
-
-        let mut i0 = 0;
-        let mut i1 = 0;
-        for s in sels {
-            let c = match (s, i0 < N_CARDS/2, i1 < N_CARDS/2) {
-                (0, true , _     ) => { let c = v0[i0]; i0+=1; c},
-                (1, _    , true  ) => { let c = v1[i1]; i1+=1; c},
-                (0, false, true  ) => { let c = v1[i1]; i1+=1; c},
-                (1, true , false ) => { let c = v0[i0]; i0+=1; c},
-                 _                 => panic!(),
-            };
-            dnew.push(c);
-        }
-        *self = Deck {cards : dnew};
-    }
-}}
-
-fn timestamp() -> u128 {
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos()
-}
-
-fn duration(t1:&u128, t2:&u128) -> f64 {
-    assert!(t2 > t1);
-    /*
-    Timestamps are in nanoseconds in u128.  This will not fit in a f64.
-    Subtract first. For durations less than 1 day, there should only be
-    about 16 bits of seconds. It takes about 30 bits to represent
-    nanoseconds giving about 46 bits total.  This is less than the 51
-    bits available in f64.
-    */
-    let nu:u128 = t2 - t1;
-    let nf:f64 = nu as f64;
-     * 1e-9
-}
-
-pub fn test_shuffle() {
-    println!("Start test_shuffle");
-    let start:u128 = timestamp();
-
-    // shuffle many times and put decks in hashmap
-    // if there is a duplicate, we fail the test
-    const NSHUFFLES:usize = 1000000;
-    const NROUNDS:usize = 10;
-    let mut deck = Deck::new();
-    let mut hm:HashMap<Deck, usize> = HashMap::new();
-    for i in 0..NSHUFFLES {
-        if 0==(i%(NSHUFFLES/20)) {
-            println!("shuffling {}",i);
-            println!("{:?}",&deck.cards);
-        }
-        deck.shuffle(vec![], NROUNDS);
-        assert_eq!(None, hm.insert(deck.clone(), i));
-    }
-    assert!(deck.valid());
-
-    let end:u128 = timestamp();
-    let dur:f64 = duration(&start, &end);
-    println!("/nFinished test_shuffle");
-    println!("Elapsed time seconds: {}", dur);
-    println!("nrounds : {}  nshuffles: {}", NROUNDS, NSHUFFLES);
-    println!("Insert into hash table and check for duplicates");
-    let rate:f64 = (NSHUFFLES as f64) * (NROUNDS as f64) / dur;
-    println!("Shuffles/second rate: {}", rate);
-}
-
-/*----------------------------------------------------------------------
-Test if deck is random based on number of runs
-A run is a sequence of values that increase or decrease
-*/
-
-//fn runs_test(d:&Deck) {
-//}
-
-// end mod deck --------------------------------------------------------
+// end mod card --------------------------------------------------------
