@@ -214,13 +214,19 @@ FaceUp:
     1 => card is face up and visible
 FaceUp is always set to zero for making and shuffling the deck.
 
-Bit 7 must be zero for card bytes.
+Pile:
+    0 => this is a card
+    1 -> this is pile marker
 
-+---------+--------+--------+--------+--------+--------+--------+--------+
-|   7     |   6    |   5    |   4    |   3    |   2    |   1    |   0    |
-+---------+--------+--------+--------+--------+--------+--------+--------+
-| Group=0 | FaceUp |       Suit      |                Rank               |
-+---------+--------+--------+--------+--------+--------+--------+--------+
+Reserved bit must be set to 0.
+
++---------+----------+-------+-------+-------+-------+-------+-------+
+|    7    |    6     |   5   |   4   |   3   |   2   |   1   |   0   |
++---------+----------+-------+-------+-------+-------+-------+-------+
+| Pile=0  | FaceUp   |      Suit     |              Rank             |
++---------+----------+-------+-------+-------+-------+-------+-------+
+| Pile=1  | Reserved |  N = number of cards in pile [0..63]          |
++---------+----------+-------+-------+-------+-------+-------+-------+
 
 */
 
@@ -233,7 +239,7 @@ pub struct Card {
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct CardUnpacked {
-    pub group   : bool,
+    pub pile    : bool,
     pub face_up : bool,
     pub suit    : u8,
     pub rank    : u8,
@@ -249,12 +255,19 @@ pub struct CardInfo {
 // methods
 impl Card {
 
-pub fn card_info() -> CardInfo {
+pub fn info() -> CardInfo {
     CardInfo {
         n_suits:  N_SUITS,
         n_ranks:  N_RANKS,
         n_cards:  N_SUITS * N_RANKS,
     }
+}
+
+pub fn set_face_up(&mut self, up:bool) {
+    let v:u8 = !((up as u8) - 1);   // true => 0xff, false => 0x00
+    let m:u8 = 0b0_1_00_0000;
+    self.code &= !m;                // remove old bit
+    self.code |= v&m;               // insert new bit
 }
 
 pub fn as_u8(self) -> u8 {
@@ -267,7 +280,7 @@ pub fn from_u8(card:u8) -> Card {
 
 pub fn unpack(&self) ->CardUnpacked {
     CardUnpacked {
-        group   : ( self.code & 0b1_0_00_0000) != 0,
+        pile    : ( self.code & 0b1_0_00_0000) != 0,
         face_up : ( self.code & 0b0_1_00_0000) != 0,
         suit    : ((self.code & 0b0_0_11_0000) >> 4),
         rank    : ((self.code & 0b0_0_00_1111) >> 0),
@@ -277,7 +290,7 @@ pub fn unpack(&self) ->CardUnpacked {
 pub fn pack(cu:&CardUnpacked) -> Card {
     Card { code :
         0
-        |  ((cu.group   as u8) << 7)
+        |  ((cu.pile    as u8) << 7)
         |  ((cu.face_up as u8) << 6)
         |  ((cu.suit    as u8) << 4)
         |  ((cu.rank    as u8) << 0)
@@ -316,7 +329,7 @@ pub fn from_unicode(c:char) -> Card {
         .unwrap();
     // construct unpacked card and pack it
     Card::pack ( &CardUnpacked {
-        group   : false,
+        pile    : false,
         face_up : false,
         suit    : suit,
         rank    : ri.code as u8,
@@ -325,7 +338,7 @@ pub fn from_unicode(c:char) -> Card {
 
 pub fn valid(&self) -> bool {
     let up = self.unpack();
-    !up.group & (up.rank < N_RANKS as u8)
+    !up.pile & (up.rank < N_RANKS as u8)
 }
 
 // two cards have the same color

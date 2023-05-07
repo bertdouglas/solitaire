@@ -79,9 +79,9 @@ dependencies = [
 
 [[package]]
 name = "fixedstr"
-version = "0.2.11"
+version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d75e52d684667ef3e70569174356f20d47c7f356c58acfc3bc590534ad3eef1"
+checksum = "f830c31a9c9fb94e2d27fbc76daf642784ce14eb3910d4719e29b50ccda5d0f0"
 
 [[package]]
 name = "getrandom"

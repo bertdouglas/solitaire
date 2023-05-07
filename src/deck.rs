@@ -33,7 +33,7 @@ pub struct Selectors {
 // new standard deck in canonical order
 impl Deck {
 pub fn new() -> Deck {
-    let ci = Card::card_info();
+    let ci = Card::info();
     let mut cards:Vec<u8> = vec![];
     for s in 0..ci.n_suits {
         for r in 0..ci.n_ranks {
@@ -46,7 +46,7 @@ pub fn new() -> Deck {
 
 // random selectors for shuffling a deck
 fn rand_selectors() -> Selectors {
-    let n_cards = Card::card_info().n_cards;
+    let n_cards = Card::info().n_cards;
     let mut rng = rand::thread_rng();
     let sels:Vec<u8> = (0..n_cards)
         .map(|_| rng.gen_range(0..2))
@@ -83,7 +83,7 @@ functions.
 
 impl Deck {
 pub fn shuffle(&mut self, mut vsels:Vec<Selectors>, nrounds:usize) {
-    let n_cards2 = Card::card_info().n_cards/2;
+    let n_cards2 = Card::info().n_cards/2;
     for _ in 0..nrounds {
         // replenish selectors if empty
         if 0 == vsels.len() {
