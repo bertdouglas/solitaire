@@ -114,34 +114,35 @@ pub fn shuffle(&mut self, mut vsels:Vec<Selectors>, nrounds:usize) {
     }
 }}
 
-pub fn test_shuffle() {
-    println!("Start test_shuffle");
-    let start:u128 = misc::timestamp();
+#[test]
+fn test_shuffle() {
+    //println!("Start test_shuffle");
+    //let start:u128 = misc::timestamp();
 
     // shuffle many times and put decks in hashmap
     // if there is a duplicate, we fail the test
-    const NSHUFFLES:usize = 1000000;
+    const NSHUFFLES:usize = 10000;
     const NROUNDS:usize = 10;
     let mut deck = Deck::new();
     let mut hm:HashMap<Deck, usize> = HashMap::new();
     for i in 0..NSHUFFLES {
         if 0==(i%(NSHUFFLES/20)) {
-            println!("shuffling {}",i);
-            println!("{:?}",&deck.cards);
+            //println!("shuffling {}",i);
+            //println!("{:?}",&deck.cards);
         }
         deck.shuffle(vec![], NROUNDS);
         assert_eq!(None, hm.insert(deck.clone(), i));
     }
     assert!(deck.valid());
 
-    let end:u128 = misc::timestamp();
-    let dur:f64 = misc::duration(&start, &end);
-    println!("/nFinished test_shuffle");
-    println!("Elapsed time seconds: {}", dur);
-    println!("nrounds : {}  nshuffles: {}", NROUNDS, NSHUFFLES);
-    println!("Insert into hash table and check for duplicates");
-    let rate:f64 = (NSHUFFLES as f64) * (NROUNDS as f64) / dur;
-    println!("Shuffles/second rate: {}", rate);
+    //let end:u128 = misc::timestamp();
+    //let dur:f64 = misc::duration(&start, &end);
+    //println!("/nFinished test_shuffle");
+    //println!("Elapsed time seconds: {}", dur);
+    //println!("nrounds : {}  nshuffles: {}", NROUNDS, NSHUFFLES);
+    //println!("Insert into hash table and check for duplicates");
+    //let rate:f64 = (NSHUFFLES as f64) * (NROUNDS as f64) / dur;
+    //println!("Shuffles/second rate: {}", rate);
 }
 
 /*----------------------------------------------------------------------

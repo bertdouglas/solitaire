@@ -9,6 +9,7 @@ cards or decks.
 #![allow(dead_code)]
 use std::str;
 use fixedstr::fstr;
+use crate::misc;
 
 /*----------------------------------------------------------------------
 Encoding of card ranks
@@ -239,8 +240,9 @@ pub struct Card {
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct CardUnpacked {
-    pub pile    : bool,
-    pub face_up : bool,
+    pub pile    : bool,   // pile or card
+    pub pcount  : u8,     // if pile then count of cards in pile
+    pub face_up : bool,   // remaining field for cards only
     pub suit    : u8,
     pub rank    : u8,
 }
@@ -252,41 +254,49 @@ pub struct CardInfo {
     pub n_cards:  usize,
 }
 
-// methods
 impl Card {
-
 pub fn info() -> CardInfo {
     CardInfo {
         n_suits:  N_SUITS,
         n_ranks:  N_RANKS,
         n_cards:  N_SUITS * N_RANKS,
     }
-}
+}}
 
+impl Card {
 pub fn set_face_up(&mut self, up:bool) {
-    let v:u8 = !((up as u8) - 1);   // true => 0xff, false => 0x00
+    // true => 0xff, false => 0x00
+    let v:u8 = misc::bool_to_allbits(up);
     let m:u8 = 0b0_1_00_0000;
     self.code &= !m;                // remove old bit
     self.code |= v&m;               // insert new bit
+}}
+
+#[test]
+fn test_set_face_up() {
+    fn t(a:u8,b:u8,up:bool) {
+        let mut s = Card { code: a };
+        s.set_face_up(up);
+        assert_eq!(s.code, b);
+    }
+    t(0b0_0_00_1010, 0b0_0_00_1010, false );
+    t(0b0_0_01_1111, 0b0_1_01_1111, true  );
+    t(0b0_1_10_0111, 0b0_0_10_0111, false );
+    t(0b0_1_11_0101, 0b0_1_11_0101, true  );
 }
 
-pub fn as_u8(self) -> u8 {
-    self.code as u8
-}
-
-pub fn from_u8(card:u8) -> Card {
-    Card { code : card }
-}
-
+impl Card {
 pub fn unpack(&self) ->CardUnpacked {
     CardUnpacked {
         pile    : ( self.code & 0b1_0_00_0000) != 0,
+        pcount  : ( self.code & 0b0_0_11_1111) >> 0,
         face_up : ( self.code & 0b0_1_00_0000) != 0,
         suit    : ((self.code & 0b0_0_11_0000) >> 4),
         rank    : ((self.code & 0b0_0_00_1111) >> 0),
     }
-}
+}}
 
+impl Card {
 pub fn pack(cu:&CardUnpacked) -> Card {
     Card { code :
         0
@@ -295,7 +305,18 @@ pub fn pack(cu:&CardUnpacked) -> Card {
         |  ((cu.suit    as u8) << 4)
         |  ((cu.rank    as u8) << 0)
     }
+}}
+
+#[test]
+fn test_pack_and_unpack() {
+    // packed -> unpacked -> packed -> check
+
+    // unpacked -> packed -> unpacked -> check
+
+    // FIXME
 }
+
+impl Card {
 
 pub fn to_unicode(&self) -> char {
     let up = self.unpack();
@@ -333,6 +354,7 @@ pub fn from_unicode(c:char) -> Card {
         face_up : false,
         suit    : suit,
         rank    : ri.code as u8,
+        ..Default::default()
     })
 }
 

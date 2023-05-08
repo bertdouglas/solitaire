@@ -19,9 +19,45 @@ Commercial licenses may be negotiated by contacting me at:
 */
 
 /*----------------------------------------------------------------------
+Convert boolean to all ones or all zeros
+  true  -> 0xff
+  false -> 0x00
+
+Pretty trivial, but a little tricky.  Relies on rust internal
+representation of booleans and twos complement signed integers. This
+code will be inlined by the compiler. It should be quite fast, as there
+are no branches.
+
+See the rust reference:
+https://doc.rust-lang.org/reference/types/boolean.html
+
+    An object with the boolean type has a size and alignment of 1 each.
+    The value false has the bit pattern 0x00 and the value true has the
+    bit pattern 0x01. It is undefined behavior for an object with the
+    boolean type to have any other bit pattern.
+*/
+
+pub fn bool_to_allbits(b:bool) -> u8 {
+    let mut v = b as i8;   // false => 0x00    true => 0x01
+    v = -v;                // false => 0x00    true => 0xff
+    v as u8
+}
+
+#[test]
+fn test_bool_to_allbits() {
+    fn t(b:bool, a:u8) {
+        let c = bool_to_allbits(b);
+        assert_eq!(c,a);
+    }
+    t(true,  0xff);
+    t(false, 0x00);
+}
+
+/*----------------------------------------------------------------------
 Time helper functions
 */
 
+// u128 nanosecond resolution timestamps
 pub fn timestamp() -> u128 {
     SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -29,6 +65,7 @@ pub fn timestamp() -> u128 {
         .as_nanos()
 }
 
+// f64 duration in seconds from two timestamps
 pub fn duration(ts1:&u128, ts2:&u128) -> f64 {
     assert!(ts2 > ts1);
     /*
@@ -42,3 +79,18 @@ pub fn duration(ts1:&u128, ts2:&u128) -> f64 {
     let nf:f64 = nu as f64;
     nf * 1e-9
 }
+
+#[test]
+fn test_time_and_duration() {
+    /*
+    Get a timestamp. Sleep for 100 ms. Get another timestamp. Check
+    duration is 100ms (with some tolerance). Perhaps this is better as
+    a example or a bench where runtime could be longer. It would also
+    be good to do multiple samples and find the variance.
+    */
+
+    //FIXME
+}
+
+
+// End misc module -----------------------------------------------------
