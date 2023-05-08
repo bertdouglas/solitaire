@@ -340,18 +340,46 @@ pub fn valid(&self) -> bool {
     let up = self.unpack();
     !up.pile & (up.rank < N_RANKS as u8)
 }
+}
 
 // two cards have the same color
+impl Card {
 pub fn same_color(&self,other:&Card) -> bool {
     0 == ((self.code ^ other.code) & SUIT_COLOR_MASK)
+}}
+
+#[test]
+fn test_same_color() {
+    // FIXME
 }
 
 // other is next ascending rank to self
+impl Card {
 pub fn rank_next(&self,other:Card) -> bool {
     let rs:u8 = self.code & RANK_MASK;
     let ro:u8 = other.code & RANK_MASK;
     rs + 1 == ro
+}}
+
+#[test]
+fn test_rank_next() {
+    fn rank2card(rank:RankCode) -> Card {
+        Card { code : rank as u8 }
+    }
+    fn t(rs: RankCode, ro:RankCode, next:bool) {
+        let cs = rank2card(rs);
+        let co = rank2card(ro);
+        assert_eq!(cs.rank_next(co), next);
+    }
+    use RankCode::*;
+    t(Ac,N2,true  );
+    t(Ac,N3,false );
+    t(N2,N3,true  );
+    t(N3,N2,false );
+    t(NT,Ja,true  );
+    t(Ja,Qu,true  );
+    t(Qu,Ki,true  );
+    t(Ki,Qu,false );
 }
-}  // end impl Card
 
 // end mod card --------------------------------------------------------
