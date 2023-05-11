@@ -43,6 +43,23 @@ And don't have to use nightly rust.
       };
       assert_eq!(rebuilt, [4294967295, 0, 1]);
 
+-----------------------------
+Back at night.  Got the iterator version working.  Wrote a timing test
+to see how it is optimized.
+
+    bertd@ghd-asb:~/0repos/solitaire$ cargo run -r --example test_card_vec
+       Compiling solitaire v0.1.0 (/home/bertd/0repos/solitaire)
+        Finished release [optimized] target(s) in 0.38s
+         Running `target/release/examples/test_card_vec`
+    vector sizes :  [100, 10000, 1000000]
+    to_u8 times  :  [5.9000000000000006e-8, 3.7e-8, 5.5e-8]
+    from_u8 times:  [4.3400000000000005e-7, 2.889e-6, 0.00044496700000000005]
+
+to_u8 takes same time even on large vector.
+from_u8 takes 100 times longer on long vector.
+It is even 10 times longer on short vector.
+
+Looks like I need to go to the raw parts method.
 
 ------------------------------------------------------------------------
 2023-04-30 Sunday

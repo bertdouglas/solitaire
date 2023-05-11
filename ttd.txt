@@ -1,3 +1,5 @@
+get rid of un-needed crates added
+
 track down some bit hack references
 https://medium.com/techie-delight/top-bit-manipulation-hacks-a9a1c5536dc9
 https://catonmat.net/low-level-bit-hacks
