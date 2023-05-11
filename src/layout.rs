@@ -22,7 +22,7 @@ is associated with the layout by the ordering of the piles.
 */
 
 #![allow(dead_code)]
-use crate::card::Card;
+use crate::card::*;
 use fixedstr::fstr;
 
 
@@ -46,12 +46,7 @@ pub const PACK_SIZE:usize = 62;  // number of groups + number of cards
 
 #[derive(Clone, Debug, Default)]
 pub struct Layout {
-    piles: Vec<Pile>,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct Pile {
-    cards: Vec<Card>,
+    piles: Vec<CardVec>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -65,18 +60,40 @@ impl Default for LayoutPacked {
     }
 }
 
-impl Layout {
 
 /*----------------------------------------------------------------------
 Move n cards from the tail of one pile to the tail of another pile.
+Maintain same order.
 
 This will panic on an invalid move.  A move is considered invalid only
 if the piles or cards referenced do not exist.  There is no check
 for consistency with the rules of the game.
 */
 
+impl Layout {
 pub fn move_tail(&mut self, from_pile:usize, to_pile:usize, n:usize) {
+    let fp = &mut self.piles[from_pile].cards;
+    let m = fp.len()-n;
+    let tail = fp[m..].to_vec();
+    fp.truncate(m);
+    let tp = &mut self.piles[to_pile].cards;
+    tp.extend_from_slice(&tail);
+}}
+
+/*
+FIXME
+#[test]
+fn test_move_tail() {
+    fn t ( fb:Vec<u8>, tb:Vec<u8>, n:usize,
+           fa:Vec<u8>, ta:Vec<u8>
+    ) {
+        let mut lo: Layout ( piles: vec![] );
+    }
+    t(vec![4,5], vec![0,1,2,3],, 2, [].[0,1,2,3,4,5]);
 }
+*/
+
+impl Layout {
 
 pub fn to_text(&self) -> String {
     let out = String::new();

@@ -234,9 +234,31 @@ Reserved bit must be set to 0.
 const CARD_UNICODE_BASE:u32 = 0x1F000;
 
 #[derive(Clone, Copy, Debug, Default)]
+#[repr(transparent)]
 pub struct Card {
     pub code: u8,
 }
+
+#[derive(Clone, Debug, Default)]
+pub struct CardVec {
+    pub cards: Vec<Card>,
+}
+
+// FiXME check that copy is optimized away in these two functions
+impl CardVec {
+fn to_vec_u8(self) -> Vec<u8> {
+    self.cards.into_iter().map(|x| x.code).collect()
+}}
+
+// FIXME
+/* FromIterator is not implemented for Card
+To implement it seems deep right now
+Maybe I need to collect a different type, lilke CardVec.cards
+impl CardVec {
+fn from_vec_u8(vec:Vec<u8>) -> CardVec {
+    vec.into_iter().map(|x| Card{code:x}).collect()
+}}
+*/
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct CardUnpacked {
