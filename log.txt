@@ -1,4 +1,50 @@
 ------------------------------------------------------------------------
+2023-06-10 Wednesday
+
+Decided to make a new struct CardVec and hang some methods on it to
+convert to and from other types like Vec<u8>.
+For making tests, it is awkward and overly cluttered to initialize a vector of Cards.
+
+Problem is there is no good way in rust to change the type of a vector
+even if the underlying types both have size of one byte.
+
+If you use idiomatic iterators with NoOp map function, then supposedly
+the copy is optimized away.  Having trouble properly constructing
+the iterator from Vec<u8> back to Vec<Card>.  Maybe I am doing it wrong.
+Or maybe it is impossible without writing a custom Fromiterator function.
+
+There is also a feature in "nightly" that converts a vector into "raw parts"
+which can then be used to make a new vector.
+
+    #![feature(vec_into_raw_parts)]
+
+    fn convert_using_into_raw_parts(v: Vec<T>) -> Vec<U> {
+        let (ptr, len, cap) = v.into_raw_parts();
+        unsafe { Vec::from_raw_parts(ptr as *mut U, len, cap) }
+    }
+
+There is also a crate that does something similar.  Uses a regular
+struct instead of a tuple struct.  Impossible to get fields in wrong order.
+And don't have to use nightly rust.
+
+      use raw_parts::RawParts;
+
+      let v: Vec<i32> = vec![-1, 0, 1];
+
+      let RawParts { ptr, length, capacity } = RawParts::from_vec(v);
+
+      let rebuilt = unsafe {
+          // We can now make changes to the components, such as
+          // transmuting the raw pointer to a compatible type.
+          let ptr = ptr as *mut u32;
+          let raw_parts = RawParts { ptr, length, capacity };
+
+          RawParts::into_vec(raw_parts)
+      };
+      assert_eq!(rebuilt, [4294967295, 0, 1]);
+
+
+------------------------------------------------------------------------
 2023-04-30 Sunday
 
 Found that there are unicode characters in standard linux
