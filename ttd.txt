@@ -1,3 +1,6 @@
+find all places where misc::rand_vec_u8 could be used to
+replace similar code.
+
 figure out how to comply with cargo conventions for crate with both bin
 and library, so that I don't have to use paths to reference modules in
 examples.
