@@ -7,6 +7,8 @@ cards or decks.
 */
 
 #![allow(dead_code)]
+#![allow(unused_variables)]
+
 use std::str;
 use fixedstr::fstr;
 use crate::misc;
@@ -263,7 +265,14 @@ pub fn from_vec_u8(vec:Vec<u8>) -> CardVec {
 
 #[test]
 fn test_card_vec() {
-// FIXME
+    for _ in 0..10 {
+        for size in 1..1000 {
+            let vin = misc::rand_vec_u8(size);
+            let cv:CardVec = CardVec::from_vec_u8(vin.clone());
+            let vout = cv.to_vec_u8();
+            assert_eq!(vout,vin);
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]

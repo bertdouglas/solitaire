@@ -1,1 +1,1 @@
-cargo run -r --example test_card_vec
+cargo run -r --test test_card_vec

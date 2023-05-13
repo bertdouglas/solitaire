@@ -22,9 +22,10 @@ is associated with the layout by the ordering of the piles.
 */
 
 #![allow(dead_code)]
-use crate::card::*;
-use fixedstr::fstr;
+#![allow(unused_variables)]
 
+use crate::card::*;
+//use fixedstr::fstr;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.

@@ -1,3 +1,7 @@
+figure out how to comply with cargo conventions for crate with both bin
+and library, so that I don't have to use paths to reference modules in
+examples.
+
 get rid of un-needed crates added
 
 track down some bit hack references

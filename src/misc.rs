@@ -4,7 +4,11 @@ Miscellaneous module
 Small things that don't fit anywhere else
 */
 
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use std::time::{SystemTime};
+use rand::Rng;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -92,5 +96,17 @@ fn test_time_and_duration() {
     //FIXME
 }
 
+/*----------------------------------------------------------------------
+Make a random vector of u8
+*/
+
+// FIXME add some statistical tests for randomness
+pub fn rand_vec_u8(n:usize) -> Vec<u8> {
+    let mut rng = rand::thread_rng();
+    let vu8:Vec<u8> = (0..n)
+        .map(|_| rng.gen_range(0..255))
+        .collect();
+    vu8
+}
 
 // End misc module -----------------------------------------------------

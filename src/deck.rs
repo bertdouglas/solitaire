@@ -3,10 +3,13 @@ Deck module
 
 Create and shuffle decks of cards
 */
-use std::collections::HashMap;
+
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use rand::Rng;
 use crate::card::Card;
-use crate::misc;
+//use crate::misc;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -116,6 +119,8 @@ pub fn shuffle(&mut self, mut vsels:Vec<Selectors>, nrounds:usize) {
 
 #[test]
 fn test_shuffle() {
+    use std::collections::HashMap;
+
     //println!("Start test_shuffle");
     //let start:u128 = misc::timestamp();
 
