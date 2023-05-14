@@ -41,13 +41,14 @@ Commercial licenses may be negotiated by contacting me at:
 */
 
 /*----------------------------------------------------------------------
+PACK_SIZE is the nmber of groups + number of cards rounded up to a
+cache friendly boundary.
 */
-
-pub const PACK_SIZE:usize = 62;  // number of groups + number of cards
+pub const PACK_SIZE:usize = 64;
 
 #[derive(Clone, Debug, Default)]
 pub struct Layout {
-    piles: Vec<CardVec>,
+    piles: Vec<Vec<Card>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -61,7 +62,6 @@ impl Default for LayoutPacked {
     }
 }
 
-
 /*----------------------------------------------------------------------
 Move n cards from the tail of one pile to the tail of another pile.
 Maintain same order.
@@ -73,11 +73,11 @@ for consistency with the rules of the game.
 
 impl Layout {
 pub fn move_tail(&mut self, from_pile:usize, to_pile:usize, n:usize) {
-    let fp = &mut self.piles[from_pile].cards;
+    let fp = &mut self.piles[from_pile];
     let m = fp.len()-n;
     let tail = fp[m..].to_vec();
     fp.truncate(m);
-    let tp = &mut self.piles[to_pile].cards;
+    let tp = &mut self.piles[to_pile];
     tp.extend_from_slice(&tail);
 }}
 
@@ -116,9 +116,9 @@ Set tail of pile face up or face down
 
 pub fn set_tail_face_up(&mut self, ipile:usize, n:usize, up:bool) {
     let pile = &mut self.piles[ipile];
-    let len = pile.cards.len();
+    let len = pile.len();
     for i in (len-n)..len {
-        pile.cards[i].set_face_up(up);
+        pile[i].set_face_up(up);
     }
 }
 

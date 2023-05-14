@@ -241,40 +241,6 @@ pub struct Card {
     pub code: u8,
 }
 
-#[derive(Clone, Debug, Default)]
-#[repr(transparent)]
-pub struct CardVec {
-    pub cards: Vec<Card>,
-}
-
-// FiXME check that copy is optimized away in these two functions
-impl CardVec {
-pub fn to_vec_u8(self) -> Vec<u8> {
-    self.cards.into_iter()
-        .map(|x| x.code)
-        .collect()
-}}
-
-impl CardVec {
-pub fn from_vec_u8(vec:Vec<u8>) -> CardVec {
-    CardVec {cards: vec.into_iter()
-        .map(|x| Card{code:x})
-        .collect()
-    }
-}}
-
-#[test]
-fn test_card_vec() {
-    for _ in 0..10 {
-        for size in 1..1000 {
-            let vin = misc::rand_vec_u8(size);
-            let cv:CardVec = CardVec::from_vec_u8(vin.clone());
-            let vout = cv.to_vec_u8();
-            assert_eq!(vout,vin);
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct CardUnpacked {
     pub pile    : bool,   // pile or card
@@ -439,6 +405,53 @@ fn test_rank_next() {
     t(Ja,Qu,true  );
     t(Qu,Ki,true  );
     t(Ki,Qu,false );
+}
+
+/*----------------------------------------------------------------------
+Cast vectors of cards to vectors of u8 and back
+
+NOTE:
+    If you follow the idiom below, the compiler optimizes out the copy,
+    and just reuses the same memory of yhe argument for the result.
+    This is somewhat fragile. Any change is likely to result in a
+    slowdown. There is an executable called "test_card_vec_perf" which
+    verifies the correct performance of the following two functions
+*/
+
+
+pub fn vec_card_from_vec_u8(vec_u8:Vec<u8>) -> Vec<Card> {
+    vec_u8.into_iter()
+        .map(|x| Card{code:x})
+        .collect()
+}
+
+/*
+pub fn vec_card_from_vec_u8(vec_u8:Vec<u8>) -> Vec<Card> {
+    use raw_parts::RawParts;
+    let RawParts { ptr, length, capacity } = RawParts::from_vec(vec_u8);
+    unsafe {
+        let ptr = ptr as *mut Card;
+        RawParts::into_vec( RawParts { ptr, length, capacity })
+    }
+}
+*/
+
+pub fn vec_u8_from_vec_card(vec_card:Vec<Card>) -> Vec<u8> {
+    vec_card.into_iter()
+        .map(|x| x.code)
+        .collect()
+}
+
+#[test]
+fn test_card_vec() {
+    for _ in 0..10 {
+        for size in 1..100 {
+            let vu8in:Vec<u8> = misc::rand_vec_u8(size);
+            let vc:Vec<Card> = vec_card_from_vec_u8(vu8in.clone());
+            let vu8out = vec_u8_from_vec_card(vc);
+            assert_eq!(vu8in,vu8out);
+        }
+    }
 }
 
 // end mod card --------------------------------------------------------

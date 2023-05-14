@@ -1,5 +1,81 @@
 ------------------------------------------------------------------------
-2023-06-10 Wednesday
+2023-05-14 Sunday
+
+Tried the raw parts scheme.  Only way I could get it to compile is to
+use a CardVec constructor, and from execution times, that causes
+a copy of the whole vector.
+Conclude that the example does not apply to my case.  It is changing
+a vector of i32 to u32.
+
+        impl CardVec {
+        pub fn from_vec_u8(v:Vec<u8>) -> CardVec {
+            use raw_parts::RawParts;
+            let RawParts { ptr, length, capacity } = RawParts::from_vec(v);
+            unsafe {
+                let ptr = ptr as *mut Card;
+                CardVec { cards: RawParts::into_vec(
+                    RawParts { ptr, length, capacity }
+                ) }
+            }
+        }}
+
+This is from the raw-parts crate.  Look for another example.
+No matching examples.
+Looks like I need to use bare vectors without struct wrapper.
+Then do not need raw parts.
+
+Recoded to use Vec<Card> and Vec<u8>
+Failed to optimize one way.  Ok the other.
+
+      pub fn vec_u8_from_vec_card(vec_card:Vec<Card>) -> Vec<u8> {
+          vec_card.into_iter()
+              .map(|x| x.code)
+              .collect()
+      }
+
+      pub fn vec_card_from_vec_u8(vec_u8:Vec<u8>) -> Vec<Card> {
+          vec_u8.into_iter()
+              .map(|x| Card{code:x})
+              .collect()
+      }
+
+First one optimizes out the copy.  Second does not.
+    vector sizes :  [100, 10000, 1000000]
+    to_u8 times  :  [6.4e-8, 3.8e-8, 4.9e-8]
+    from_u8 times:  [4.4e-7, 3.2280000000000003e-6, 0.00047802]
+
+Looks like it is necessary to use the raw parts trick after all.
+
+Recoded using raw parts.
+
+    pub fn vec_card_from_vec_u8(vec_u8:Vec<u8>) -> Vec<Card> {
+        use raw_parts::RawParts;
+        let RawParts { ptr, length, capacity } = RawParts::from_vec(vec_u8);
+        unsafe {
+            let ptr = ptr as *mut Card;
+            RawParts::into_vec( RawParts { ptr, length, capacity })
+        }
+    }
+
+It is still slow.  Look at test again.  Make sure test is right.
+Found mistakes in test.  The from and to were backwards.
+And one side had a clone() operation inside the time capture.
+
+Spent a lot of time doing nice formatting of floatin point numbers.
+There is no built in support that is any good.  You have to get a
+crate to do it.  There are quite a few.  Not clear which one is best.
+Output now much more readable.
+
+Getting good numbers for both the idiom and the raw parts version.
+There is enough noise in measurements that it is not clear which one
+is faster.  Would be hard to add iterations, because clone would be
+needed, as input is consumed.
+
+Call it good enough.
+
+
+------------------------------------------------------------------------
+2023-05-10 Wednesday
 
 Decided to make a new struct CardVec and hang some methods on it to
 convert to and from other types like Vec<u8>.
