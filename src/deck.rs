@@ -7,9 +7,8 @@ Create and shuffle decks of cards
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use rand::Rng;
-use crate::card::Card;
-//use crate::misc;
+use crate::card::*;
+use crate::misc::*;
 
 /*----------------------------------------------------------------------
 (c) Copyright Bert Douglas 2023.
@@ -50,10 +49,7 @@ pub fn new() -> Deck {
 // random selectors for shuffling a deck
 fn rand_selectors() -> Selectors {
     let n_cards = Card::info().n_cards;
-    let mut rng = rand::thread_rng();
-    let sels:Vec<u8> = (0..n_cards)
-        .map(|_| rng.gen_range(0..2))
-        .collect();
+    let sels = rand_vec_u8(n_cards,2);
     Selectors{ sels, }
 }
 

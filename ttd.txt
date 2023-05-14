@@ -1,5 +1,4 @@
-find all places where misc::rand_vec_u8 could be used to
-replace similar code.
+
 
 figure out how to comply with cargo conventions for crate with both bin
 and library, so that I don't have to use paths to reference modules in
@@ -18,10 +17,6 @@ has been optimized away, because results are not being used.
 
 test random numbers are really random
 check deck shuffle is really random
-
-move deck object to separate file.  Looks like I am headed towards
-one object, one file.  Harder to share stuff between objects.
-Easier than scrolling up and down in a huge file.
 
 benchmark deck::new() and other similar functions to make sure the
 compiler has optimized them into tables.

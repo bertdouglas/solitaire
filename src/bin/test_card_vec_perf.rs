@@ -28,7 +28,7 @@ fn main() {
         let mut i = 0;
         for size in &sizes {
             // from Vec<u8>
-            let vin = rand_vec_u8(*size);
+            let vin = rand_vec_u8(*size,255);
             let vin1 = vin.clone();
             let ts0 = timestamp();
             let vc:Vec<Card> = vec_card_from_vec_u8(vin1);

@@ -13,7 +13,6 @@ console_engine = "2.6.0"
 fixedstr = "0.2.10"
 format_num = "0.1.0"
 rand = "0.8.5"
-raw-parts = "1.1.2"
 strum = "0.24.1"
 
 [[bin]]

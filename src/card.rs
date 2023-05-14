@@ -446,7 +446,7 @@ pub fn vec_u8_from_vec_card(vec_card:Vec<Card>) -> Vec<u8> {
 fn test_card_vec() {
     for _ in 0..10 {
         for size in 1..100 {
-            let vu8in:Vec<u8> = misc::rand_vec_u8(size);
+            let vu8in:Vec<u8> = misc::rand_vec_u8(size,255);
             let vc:Vec<Card> = vec_card_from_vec_u8(vu8in.clone());
             let vu8out = vec_u8_from_vec_card(vc);
             assert_eq!(vu8in,vu8out);

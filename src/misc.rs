@@ -98,14 +98,17 @@ fn test_time_and_duration() {
 
 /*----------------------------------------------------------------------
 Make a random vector of u8
+specify length vector and range of each value
 */
 
 // FIXME add some statistical tests for randomness
-pub fn rand_vec_u8(n:usize) -> Vec<u8> {
+// FIXME optimize using "fill" method of rng
+pub fn rand_vec_u8(n:usize, r:u8) -> Vec<u8> {
     let mut rng = rand::thread_rng();
-    let vu8:Vec<u8> = (0..n)
-        .map(|_| rng.gen_range(0..255))
-        .collect();
+    let mut vu8:Vec<u8> = vec![];
+    for _ in 0..n {
+        vu8.push(rng.gen_range(0..r));
+    }
     vu8
 }
 
