@@ -6,13 +6,8 @@ Measure performance at several different length vectors.
 Execution time should not depend on length.
 */
 
-#[path = "../card.rs"]
-mod card;
-#[path = "../misc.rs"]
-mod misc;
-
-use card::*;
-use misc::*;
+use solitaire::card::*;
+use solitaire::misc::*;
 
 use colored::Colorize;
 
@@ -53,6 +48,8 @@ fn main() {
         time_fr_u8[i] /= N as f64;
     }
 
+    println!("test_card_vec_perf start");
+
     use format_num::NumberFormat;
     let num = NumberFormat::new();
 
@@ -84,4 +81,8 @@ fn main() {
     } else {
         println!("{}","PASSED".truecolor(0,255,0).on_truecolor(0,0,0));
     }
+
+    println!("test_card_vec_perf end");
+    println!();
+
 }

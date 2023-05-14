@@ -1,9 +1,4 @@
 
-
-figure out how to comply with cargo conventions for crate with both bin
-and library, so that I don't have to use paths to reference modules in
-examples.
-
 get rid of un-needed crates added
 
 track down some bit hack references
@@ -20,6 +15,9 @@ check deck shuffle is really random
 
 benchmark deck::new() and other similar functions to make sure the
 compiler has optimized them into tables.
+
+improve performance tests so they all are concatenated into a dated
+log, which can be put into version control and compared to later runs.
 
 ----------------------------
 benchmark the random number generator for time
