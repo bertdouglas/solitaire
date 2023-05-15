@@ -1,0 +1,12 @@
+test_card_vec_perf start
+number of iterations:  100
+
+vector sizes  :             1        100      10000    1000000
+from_u8 times :       63.96nS    31.53nS    33.40nS    84.25nS
+to_u8 times   :       37.16nS    30.82nS    34.58nS    79.85nS
+relative error from u8 :   5.8
+relative error to u8   :  11.5
+relative error limit   :  20.0
+PASSED
+test_card_vec_perf end
+

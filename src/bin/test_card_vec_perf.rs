@@ -13,9 +13,11 @@ use colored::Colorize;
 
 fn main() {
 
+    const NSIZES:usize = 4;
     let sizes:Vec<usize> = vec![1,100,10_000,1_000_000];
-    let mut time_to_u8:Vec<f64> = vec![0.0;4];
-    let mut time_fr_u8:Vec<f64> = vec![0.0;4];
+    let mut time_to_u8:Vec<f64> = vec![0.0;NSIZES];
+    let mut time_fr_u8:Vec<f64> = vec![0.0;NSIZES];
+    assert_eq!(sizes.len(), NSIZES);
 
     const N:usize = 100;
 
@@ -49,6 +51,7 @@ fn main() {
     }
 
     println!("test_card_vec_perf start");
+    println!("number of iterations:  {}", N);
 
     use format_num::NumberFormat;
     let num = NumberFormat::new();
@@ -62,21 +65,21 @@ fn main() {
     println!();
 
     // The middle two numbers seem to be most consistent
-    fn rel_err(x:&Vec<f64>) -> f64 {
+    fn err(x:&Vec<f64>) -> f64 {
         let a = x[1];
         let b = x[2];
-        let re = 2.0 * (a-b)/(a+b);   // relative error
-        f64::abs(re) * 100.0
+        let err = (a-b)/f64::sqrt(a*b);
+        f64::abs(err) * 100.0
     }
 
-    let re_fr = rel_err(&time_fr_u8);
-    let re_to = rel_err(&time_to_u8);
-    println!("relative error from u8 :  {:4.1}", re_fr );
-    println!("relative error to u8   :  {:4.1}", re_to );
+    let err_fr = err(&time_fr_u8);
+    let err_to = err(&time_to_u8);
+    println!("relative error from u8 :  {:4.1}", err_fr );
+    println!("relative error to u8   :  {:4.1}", err_to );
     println!("relative error limit   :  {:4.1}", REL   );
 
     const REL:f64 = 20.0;   // relative error limit percent
-    if (re_fr > REL) | (re_to > REL) {
+    if (err_fr > REL) | (err_to > REL) {
         println!("{}","FAILED".truecolor(255,0,0).on_truecolor(0,0,0));
     } else {
         println!("{}","PASSED".truecolor(0,255,0).on_truecolor(0,0,0));
