@@ -1,9 +1,12 @@
 /*----------------------------------------------------------------------
 Card Module
 
-Create and manipulate cards and decks of cards.
+Create and manipulate cards.
 Ignore any possible future where there may be different kinds of
 cards or decks.
+
+(c) Copyright Bert Douglas 2023.
+SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 #![allow(dead_code)]
@@ -208,6 +211,26 @@ fn test_suits() {
     }
 }
 
+/*----------------------------------------------------------------------
+static card information
+*/
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct CardInfo {
+    pub n_suits:  usize,
+    pub n_ranks:  usize,
+    pub n_cards:  usize,
+}
+
+impl Card {
+pub fn info() -> CardInfo {
+    CardInfo {
+        n_suits:  N_SUITS,
+        n_ranks:  N_RANKS,
+        n_cards:  N_SUITS * N_RANKS,
+    }
+}}
+
 /*-----------------------------------------------------------------------
 Encoding of a card in a byte
 
@@ -233,7 +256,16 @@ Reserved bit must be set to 0.
 
 */
 
-const CARD_UNICODE_BASE:u32 = 0x1F000;
+/*----------------------------------------------------------------------
+Pack and unpack and validity checks
+
+FIXME
+    review usage of card/pile and pcount field
+    consider using an enum for unpacked version
+    or document usage
+    does not seem consistent usage now
+    what will be most convenient
+*/
 
 #[derive(Clone, Copy, Debug, Default)]
 #[repr(transparent)]
@@ -250,21 +282,64 @@ pub struct CardUnpacked {
     pub rank    : u8,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
-pub struct CardInfo {
-    pub n_suits:  usize,
-    pub n_ranks:  usize,
-    pub n_cards:  usize,
-}
-
 impl Card {
-pub fn info() -> CardInfo {
-    CardInfo {
-        n_suits:  N_SUITS,
-        n_ranks:  N_RANKS,
-        n_cards:  N_SUITS * N_RANKS,
+pub fn unpack(&self) -> CardUnpacked {
+    CardUnpacked {
+        pile    : ( self.code & 0b1_0_00_0000) != 0,
+        pcount  : ( self.code & 0b0_0_11_1111) >> 0,
+        face_up : ( self.code & 0b0_1_00_0000) != 0,
+        suit    : ((self.code & 0b0_0_11_0000) >> 4),
+        rank    : ((self.code & 0b0_0_00_1111) >> 0),
     }
 }}
+
+impl Card {
+pub fn pack(cu:&CardUnpacked) -> Card {
+    Card { code :
+        0
+        |  ((cu.pile    as u8) << 7)
+        |  ((cu.face_up as u8) << 6)
+        |  ((cu.suit    as u8) << 4)
+        |  ((cu.rank    as u8) << 0)
+    }
+}}
+
+impl Card {
+pub fn valid(&self) -> bool {
+    let up = self.unpack();
+    !up.pile & (up.rank < N_RANKS as u8)
+}}
+
+// FIXME validity for CardUnpacked as well
+
+#[test]
+fn test_pack_and_unpack() {
+    // packed -> unpacked -> packed -> check
+
+    // unpacked -> packed -> unpacked -> check
+
+    // FIXME
+}
+
+/*----------------------------------------------------------------------
+First and next card
+*/
+
+impl Card {
+pub fn first(&self) -> Card {
+    // FIXME
+    Card { code: 0 }
+}}
+
+impl Card {
+pub fn next(&self) -> Option<Card> {
+    // FIXME
+    Some ( Card { code: 0 } )
+}}
+
+/*----------------------------------------------------------------------
+Manipulate face-up
+*/
 
 impl Card {
 pub fn set_face_up(&mut self, up:bool) {
@@ -288,39 +363,13 @@ fn test_set_face_up() {
     t(0b0_1_11_0101, 0b0_1_11_0101, true  );
 }
 
-impl Card {
-pub fn unpack(&self) ->CardUnpacked {
-    CardUnpacked {
-        pile    : ( self.code & 0b1_0_00_0000) != 0,
-        pcount  : ( self.code & 0b0_0_11_1111) >> 0,
-        face_up : ( self.code & 0b0_1_00_0000) != 0,
-        suit    : ((self.code & 0b0_0_11_0000) >> 4),
-        rank    : ((self.code & 0b0_0_00_1111) >> 0),
-    }
-}}
+/*----------------------------------------------------------------------
+To and from unicode
+*/
+
+const CARD_UNICODE_BASE:u32 = 0x1F000;
 
 impl Card {
-pub fn pack(cu:&CardUnpacked) -> Card {
-    Card { code :
-        0
-        |  ((cu.pile    as u8) << 7)
-        |  ((cu.face_up as u8) << 6)
-        |  ((cu.suit    as u8) << 4)
-        |  ((cu.rank    as u8) << 0)
-    }
-}}
-
-#[test]
-fn test_pack_and_unpack() {
-    // packed -> unpacked -> packed -> check
-
-    // unpacked -> packed -> unpacked -> check
-
-    // FIXME
-}
-
-impl Card {
-
 pub fn to_unicode(&self) -> char {
     let up = self.unpack();
     let vsi = &suit_info();
@@ -331,8 +380,9 @@ pub fn to_unicode(&self) -> char {
     let urank:u32 = vri[up.rank as usize].unicode as u32;
     let u:u32 = CARD_UNICODE_BASE | usuit | urank;
     char::from_u32(u).unwrap()
-}
+}}
 
+impl Card {
 pub fn from_unicode(c:char) -> Card {
     let vsi = &suit_info();
     let vri = &rank_info();
@@ -359,13 +409,15 @@ pub fn from_unicode(c:char) -> Card {
         rank    : ri.code as u8,
         ..Default::default()
     })
+}}
+
+fn test_unicode() {
+    // FIXME
 }
 
-pub fn valid(&self) -> bool {
-    let up = self.unpack();
-    !up.pile & (up.rank < N_RANKS as u8)
-}
-}
+/*----------------------------------------------------------------------
+Relations between two cards
+*/
 
 // two cards have the same color
 impl Card {

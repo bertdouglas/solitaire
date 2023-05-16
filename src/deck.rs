@@ -2,6 +2,9 @@
 Deck module
 
 Create and shuffle decks of cards
+
+(c) Copyright Bert Douglas 2023.
+SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 #![allow(dead_code)]
@@ -11,20 +14,11 @@ use crate::card::*;
 use crate::misc::*;
 
 /*----------------------------------------------------------------------
-(c) Copyright Bert Douglas 2023.
-
-This is an original work of Bert Douglas, begun in 2023.  It is
-available for use according to the terms of this license:
-    GNU Affero General Public License v3.0 or later
-    https://www.gnu.org/licenses/agpl-3.0.txt
-
-Commercial licenses may be negotiated by contacting me at:
-  <georgehdouglas@gmail.com>
 */
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Deck {
-    pub cards:Vec<u8>,
+    pub cards:Vec<u8>,  // FIXME consider changing to vec<card>
 }
 
 #[derive(Clone, Debug, PartialEq)]

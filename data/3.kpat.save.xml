@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kpat-game game-type="klondike" game-type-options="1" deal-number="88783540">
+	<state>
+		<move pile="talon" position="0">
+			<card id="1966600" suit="hearts" rank="eight" turn="face-down"/>
+			<card id="0655875" suit="hearts" rank="three" turn="face-down"/>
+			<card id="0327938" suit="diamonds" rank="two" turn="face-down"/>
+			<card id="1310726" suit="clubs" rank="six" turn="face-down"/>
+			<card id="1180165" suit="hearts" rank="five" turn="face-down"/>
+			<card id="1442310" suit="hearts" rank="six" turn="face-down"/>
+			<card id="1376518" suit="diamonds" rank="six" turn="face-down"/>
+			<card id="0590083" suit="diamonds" rank="three" turn="face-down"/>
+			<card id="2359306" suit="clubs" rank="ten" turn="face-down"/>
+			<card id="1900808" suit="diamonds" rank="eight" turn="face-down"/>
+			<card id="0131585" suit="hearts" rank="ace" turn="face-down"/>
+			<card id="1245957" suit="spades" rank="five" turn="face-down"/>
+			<card id="3211533" suit="diamonds" rank="king" turn="face-down"/>
+			<card id="2097161" suit="clubs" rank="nine" turn="face-down"/>
+			<card id="1508102" suit="spades" rank="six" turn="face-down"/>
+			<card id="2490890" suit="hearts" rank="ten" turn="face-down"/>
+			<card id="1114373" suit="diamonds" rank="five" turn="face-down"/>
+			<card id="0262146" suit="clubs" rank="two" turn="face-down"/>
+			<card id="0065793" suit="diamonds" rank="ace" turn="face-down"/>
+			<card id="2032392" suit="spades" rank="eight" turn="face-down"/>
+			<card id="0983812" suit="spades" rank="four" turn="face-down"/>
+			<card id="0197377" suit="spades" rank="ace" turn="face-down"/>
+			<card id="1638663" suit="diamonds" rank="seven" turn="face-down"/>
+			<card id="3015180" suit="hearts" rank="queen" turn="face-down"/>
+		</move>
+		<move pile="play0" position="0">
+			<card id="1704455" suit="hearts" rank="seven" turn="face-up"/>
+		</move>
+		<move pile="play1" position="0">
+			<card id="1572871" suit="clubs" rank="seven" turn="face-down"/>
+		</move>
+		<move pile="play1" position="1">
+			<card id="0786436" suit="clubs" rank="four" turn="face-up"/>
+		</move>
+		<move pile="play2" position="0">
+			<card id="3080972" suit="spades" rank="queen" turn="face-down"/>
+			<card id="2949388" suit="diamonds" rank="queen" turn="face-down"/>
+		</move>
+		<move pile="play2" position="2">
+			<card id="0852228" suit="diamonds" rank="four" turn="face-up"/>
+		</move>
+		<move pile="play3" position="0">
+			<card id="2162953" suit="diamonds" rank="nine" turn="face-down"/>
+			<card id="2556682" suit="spades" rank="ten" turn="face-down"/>
+			<card id="3145741" suit="clubs" rank="king" turn="face-down"/>
+		</move>
+		<move pile="play3" position="3">
+			<card id="0721667" suit="spades" rank="three" turn="face-up"/>
+		</move>
+		<move pile="play4" position="0">
+			<card id="0000001" suit="clubs" rank="ace" turn="face-down"/>
+			<card id="2621451" suit="clubs" rank="jack" turn="face-down"/>
+			<card id="1835016" suit="clubs" rank="eight" turn="face-down"/>
+			<card id="0918020" suit="hearts" rank="four" turn="face-down"/>
+		</move>
+		<move pile="play4" position="4">
+			<card id="3343117" suit="spades" rank="king" turn="face-up"/>
+		</move>
+		<move pile="play5" position="0">
+			<card id="2753035" suit="hearts" rank="jack" turn="face-down"/>
+			<card id="1770247" suit="spades" rank="seven" turn="face-down"/>
+			<card id="2228745" suit="hearts" rank="nine" turn="face-down"/>
+			<card id="2818827" suit="spades" rank="jack" turn="face-down"/>
+			<card id="0393730" suit="hearts" rank="two" turn="face-down"/>
+		</move>
+		<move pile="play5" position="5">
+			<card id="3277325" suit="hearts" rank="king" turn="face-up"/>
+		</move>
+		<move pile="play6" position="0">
+			<card id="2425098" suit="diamonds" rank="ten" turn="face-down"/>
+			<card id="0459522" suit="spades" rank="two" turn="face-down"/>
+			<card id="2294537" suit="spades" rank="nine" turn="face-down"/>
+			<card id="2687243" suit="diamonds" rank="jack" turn="face-down"/>
+			<card id="2883596" suit="clubs" rank="queen" turn="face-down"/>
+			<card id="1048581" suit="clubs" rank="five" turn="face-down"/>
+		</move>
+		<move pile="play6" position="6">
+			<card id="0524291" suit="clubs" rank="three" turn="face-up"/>
+		</move>
+	</state>
+	<state>
+		<move pile="pile" position="0">
+			<card id="3015180" suit="hearts" rank="queen" turn="face-up"/>
+		</move>
+	</state>
+	<state>
+		<move pile="pile" position="1">
+			<card id="1638663" suit="diamonds" rank="seven" turn="face-up"/>
+		</move>
+	</state>
+	<state>
+		<move pile="pile" position="2">
+			<card id="0197377" suit="spades" rank="ace" turn="face-up"/>
+		</move>
+	</state>
+	<state>
+		<move pile="target0" position="0">
+			<card id="0197377" suit="spades" rank="ace"/>
+		</move>
+	</state>
+	<state>
+		<move pile="pile" position="2">
+			<card id="0983812" suit="spades" rank="four" turn="face-up"/>
+		</move>
+	</state>
+	<state>
+		<move pile="pile" position="3">
+			<card id="2032392" suit="spades" rank="eight" turn="face-up"/>
+		</move>
+	</state>
+	<state>
+		<move pile="pile" position="4">
+			<card id="0065793" suit="diamonds" rank="ace" turn="face-up"/>
+		</move>
+	</state>
+	<state current="true">
+		<move pile="target1" position="0">
+			<card id="0065793" suit="diamonds" rank="ace"/>
+		</move>
+	</state>
+</kpat-game>

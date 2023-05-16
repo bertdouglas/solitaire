@@ -1,4 +1,64 @@
 ------------------------------------------------------------------------
+2023-05-15 Monday
+
+Decide to proceed with loading of xml file saved gamestate from
+the kpat program.  This will be needed to compare play with a known
+working solitaire program.  Seems simple enough xml.
+
+After reading about xml handling, I have picked strong-xml for first
+attempt.
+
+Now see after several moves the meaning of the xml file.  It is a
+sequence of states.  Each state encodes a sequence of moves of single
+cards.  It specifies the target pile and position (which always seems
+to be the last card.) , and the source card by suit and rank.  A weird
+mixture of location and value nomenclature.  The big point is that the
+moves are incremental, so to get the final state you must apply each
+move in turn.  This is ok for simple undo and redo, but for going
+back to a saved position it would be awkward.  And for an automated
+solver, with many unexplored positions, it would be slow and awkard.
+I am happy that my full-state approach seems better, and takes less
+only 104 bytes per state, which is less than the xml takes.  They
+probably have a more compact in memory representation.
+
+Most computers have gigabytes of memory space.  A million states
+would take about 100 megabytes, which is not a problem.  Is it
+possible to have a million states in a solitaire game?
+
+Practically speaking, the layout would have to be in memory twice. Once
+in a hash table as a key, to allow quick finding of position, if you
+happened to arrive at the same layout through a different path. Then
+there would have to be a table of the layouts in order visited by
+index, to allow finding previous positions, and multiway branching.
+
+I have a feeling that, while there may be more positions in a typical
+game than you can explore by hand, there are not enough to fill memory.
+
+Wow !  Just two and a half hours to read a bunch of examples and figure
+out the patterns.  It worked the first time that it compiled.
+Very good luck with yaserde.  Glad I dropped strong-xml right away.
+All the attributes looked way too complicated.
+
+Even the default for the missing "current" attribute worked.
+Compare the two files side by side.
+Do not see any problems.
+
+File size of pretty print output with lots of indenting and wasted
+spacing is 18kB.  The xml file is 5kB.  But it is in rust and can
+iterate over it.
+
+What next?  Define a game state structure and file format? Do I know
+enough to do that already?  Should I look for another open source
+solitaire with save feature?
+
+https://github.com/shlomif/PySolFC
+https://github.com/KyleU/solitaire.gg
+https://solitaired.com/
+https://github.com/TobiasBielefeld/Simple-Solitaire
+https://github.com/brianstrauch/solitaire-tui
+
+
+------------------------------------------------------------------------
 2023-05-14 Sunday
 
 Tried the raw parts scheme.  Only way I could get it to compile is to
@@ -72,6 +132,82 @@ is faster.  Would be hard to add iterations, because clone would be
 needed, as input is consumed.
 
 Call it good enough.
+----------------------------------
+Came back later and did several more commits.
+
+Did a search for file formats used by other implementations of solitaire
+to save their games.  The very nice c code in gnome aisleriot does not
+have a game save feature.
+However the "kpat" package from KDE does have a game save feature.
+The file is xml.  Verbose.  A lot obvious.  Some unclear.
+Looks promising for reverse engineering.
+One thing is clear is that it saves a single game position, not the
+entire game history.
+
+There is also a microsoft solitaire file save format.
+But could not find any details about format.
+
+The pile named "talon" is the stock.  Last in list is the top card.
+
+The piles "play0" through "play6" are the tableau in order from left
+to right.  The face down cards are listed separately from the face up
+cards, even though each card is tagged as to face up or face down.
+
+There is no output for the empty foundation spaces.
+
+Card ids are a mystery.  Very long, very random numbers.  Must be a lot
+of different cards, or else each possible overlap has a different id.
+Or maybe it is a hash key.  Fortunately they are not needed as the
+suit and rank are listed in plain obvious text.
+
+Need a file format to hold history and all game state
+allow backtracking and keep all the paths traveled
+
+  vector of positions
+    pos id, prev pos id, layout in compact text, move?, no branches
+
+  name of game
+  names of piles
+  current position by id
+  list of marked positions
+  deck after shuffling
+
+I think it works better to put the suit first and rank second.
+Fewer options for collisions in letters.
+
+CHDS and P
+
+other letters JQKA  no conflicts
+use T for ten, still no conflict
+
+P0P0P5C1CAH3D7SA
+
+And for face down cards use lower case
+
+P0P0P9c1cAh3d7SA
+P0 P0 P5 c1 cA h3 d7 SA
+p0 p0 p5 c1 cA h3 d7 SA
+p0 p0 p5 c1 ca h3 d7 SA
+
+p0 p0 p5c1cah3d7SA p3c5h7D3
+
+should P be upper or lower
+Doesn't matter, which is easier to read
+
+should jqka be lower as well when card is face down?
+
+Could put each pile in a separate string.  List of strings.
+
+
+
+Could put in spaces for ease of reading.  But nobody is going to read this.
+And it just takes 50% more space.
+
+I see in the glossary of patience terms that talon is another name for
+stock.
+
+
+
 
 
 ------------------------------------------------------------------------

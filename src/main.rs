@@ -1,3 +1,8 @@
+/*----------------------------------------------------------------------
+
+(c) Copyright Bert Douglas 2023.
+SPDX-License-Identifier: AGPL-3.0-or-later
+*/
 
 fn main() {
 

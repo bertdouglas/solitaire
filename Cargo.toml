@@ -14,7 +14,15 @@ fixedstr = "0.2.10"
 format_num = "0.1.0"
 rand = "0.8.5"
 strum = "0.24.1"
+yaserde = "0.8.0"
+yaserde_derive = "0.8.0"
 
 [[bin]]
 name = "test_card_vec_perf"
 test = false
+
+[[bin]]
+name = "xmlplay"
+test = false
+
+

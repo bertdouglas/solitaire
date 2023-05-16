@@ -19,6 +19,9 @@ are displayed in a tight stack, with only the top card visible. Also
 there is no information about the relative location or role of the
 various piles.  All of this other information is stored elsewhere and
 is associated with the layout by the ordering of the piles.
+
+(c) Copyright Bert Douglas 2023.
+SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 #![allow(dead_code)]
@@ -27,18 +30,6 @@ is associated with the layout by the ordering of the piles.
 use crate::card::*;
 //use fixedstr::fstr;
 
-/*----------------------------------------------------------------------
-(c) Copyright Bert Douglas 2023.
-
-This is an original work of Bert Douglas, begun in 2023.  It is
-available for use according to the terms of this license:
-    GNU Affero General Public License v3.0 or later
-    https://www.gnu.org/licenses/agpl-3.0.txt
-    SPDX-License-Identifier: AGPL-3.0-or-later
-
-Commercial licenses may be negotiated by contacting me at:
-  <georgehdouglas@gmail.com>
-*/
 
 /*----------------------------------------------------------------------
 PACK_SIZE is the nmber of groups + number of cards rounded up to a

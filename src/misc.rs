@@ -2,6 +2,9 @@
 Miscellaneous module
 
 Small things that don't fit anywhere else
+
+(c) Copyright Bert Douglas 2023.
+SPDX-License-Identifier: AGPL-3.0-or-later
 */
 
 #![allow(dead_code)]

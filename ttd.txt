@@ -1,3 +1,31 @@
+handle some fixmes
+
+how to test the stock and discard piles to see that I have the
+flipping and reversing done properly ???
+need to compare to another working implementation
+would need to duplicate the shuffle
+search for saved game representations
+maybe there is a standard text file for this
+
+need a way to represent all possible moves in text
+could use T1-3 to T2
+or "move three of hearts onto four of clubs"
+probably more user friendly
+
+need a way to show on screen all possible sources and destinations of moves
+probably handle the stock with special notation, not a simple move
+
+
+there needs to be a "debug" display trait for Card.
+A dumb, not colorized, way to show a card in text.
+Not sure any of internal text abbreviations are appropriate.
+
+
+disable some tests that clutter output with no info
+
+rename main and move to bin directory
+it is now clear that there will be several front-ends to the game
+of varying sophistication and various UI platforms
 
 get rid of un-needed crates added
 
